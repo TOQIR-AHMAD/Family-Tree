@@ -20,17 +20,41 @@ let forest = [
           N("رحمت خان", "Rahmat Khan", [
             N("ولایت", "Walayat", [
               N("عبدالرشید", "Abdul Rasheed", [
-                N("فرمان", "Farman", []),
-                N("شرف الدین", "Sharfuddin", []),
+                N("فرمان", "Farman", [
+                  N("وسیم", "Waseem", []),
+                  N("معین", "Moin", []),
+                  N("عرفان", "Irfan", []),
+                  N("ارمان", "Arman", []),
+                ]),
+                N("شرف الدین", "Sharfuddin", [
+                  N("احد", "Ahad", []),
+                  N("فہد", "Fahad", []),
+                  N("علی حسن", "Ali Hassan", []),
+                ]),
                 N("عرفان", "Irfan", []),
-                N("شمس الدین", "Shamsuddin", []),
-                N("قمر دین", "Qamar Din", []),
-                N("عظیم الدین", "Azeemuddin", []),
+                N("شمس الدین", "Shamsuddin", [
+                  N("دانیال", "Danial", []),
+                  N("یوسف", "Yousaf", []),
+                ]),
+                N("قمر دین", "Qamar Din", [
+                  N("عبداللہ", "Abdullah", []),
+                  N("عبدالرحمن", "Abdul Rahman", []),
+                ]),
+                N("عظیم الدین", "Azeemuddin", [
+                  N("یوسف", "Yousaf", []),
+                ]),
               ]),
               N("محمد رفیق", "Muhammad Rafiq", [
-                N("نثار", "Nisar", []),
-                N("قطب الدین", "Qutubuddin", []),
-                N("عبدالرؤف", "Abdul Rauf", []),
+                N("نثار", "Nisar", [
+                  N("ارسلان", "Araslan", []),
+                  N("احمد ثانی", "Ahmad Saani", []),
+                ]),
+                N("قطب الدین", "Qutubuddin", [
+                  N("طلحہ", "Talha", []),
+                ]),
+                N("عبدالرؤف", "Abdul Rauf", [
+                  N("محمد", "Muhammad", []),
+                ]),
               ]),
               N("کبیر احمد", "Kabir Ahmad", [
                 N("توقیر احمد", "Toqir Ahmad", []),
