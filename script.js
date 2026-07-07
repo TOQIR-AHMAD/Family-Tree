@@ -469,9 +469,9 @@ document.getElementById('mJson').onclick=()=>{
 function download(blob,name){ const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1500); }
 document.getElementById('mPrint').onclick=()=>{ const c=collapsed; collapsed=new Set(); render(); fitToScreen(); setTimeout(()=>{window.print(); collapsed=c; render();},150); closeMenu(); };
 
-/* PNG — always exports the FULL tree regardless of collapse state */
-document.getElementById('mPng').onclick=async()=>{
-  closeMenu();
+/* Render the FULL tree (ignoring collapse state) to an off-screen canvas.
+   Shared by the PNG and PDF exporters. */
+async function renderFullCanvas(){
   await (document.fonts?document.fonts.ready:Promise.resolve());
   const L=computeLayout(new Set()); const P=L.pos, par=L.parentOf, dep=L.depthOf;
   const W=L.w, H=L.h, dpr=2;
@@ -494,8 +494,50 @@ document.getElementById('mPng').onclick=async()=>{
     (node.children||[]).forEach(walkN);
   }
   forest.forEach(walkN);
+  return {cv,W,H};
+}
+
+/* PNG — always exports the FULL tree regardless of collapse state */
+document.getElementById('mPng').onclick=async()=>{
+  closeMenu();
+  const {cv}=await renderFullCanvas();
   cv.toBlob(b=>download(b,'shajra-tree.png'),'image/png');
 };
+
+/* PDF — hand-built single-page PDF embedding the full-tree image (no libraries).
+   The page is sized to the tree's OWN aspect ratio so the drawing fills the page
+   edge-to-edge (no wasted whitespace, nodes stay large & crisp).
+   orientation: 'landscape' (horizontal, natural) or 'portrait' (vertical, rotated 90°). */
+function bytesFromBinaryString(str){ const a=new Uint8Array(str.length); for(let i=0;i<str.length;i++) a[i]=str.charCodeAt(i)&0xff; return a; }
+async function exportPdf(orientation){
+  const {cv}=await renderFullCanvas();
+  const jpeg=cv.toDataURL('image/jpeg',0.92);
+  const bin=atob(jpeg.split(',')[1]);            // raw JPEG bytes as a binary string
+  // Page proportional to the image, with a cap on the long edge (keeps file/page sane
+  // while the full-resolution image gives high effective DPI).
+  const margin=18, maxLong=4000;
+  const s=Math.min(1, maxLong/Math.max(cv.width,cv.height));
+  const dw=cv.width*s, dh=cv.height*s;           // drawn image size in points
+  const pw=dw+2*margin, ph=dh+2*margin;          // media box = content + thin margin
+  const rotate = orientation==='portrait' ? ' /Rotate 90' : '';
+  const content=`q ${dw.toFixed(2)} 0 0 ${dh.toFixed(2)} ${margin} ${margin} cm /Im0 Do Q`;
+
+  let pdf='%PDF-1.4\n%\xff\xff\xff\xff\n';
+  const off=[];
+  const addObj=(num,body)=>{ off[num]=pdf.length; pdf+=num+' 0 obj\n'+body+'\nendobj\n'; };
+  addObj(1,'<< /Type /Catalog /Pages 2 0 R >>');
+  addObj(2,'<< /Type /Pages /Kids [3 0 R] /Count 1 >>');
+  addObj(3,`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pw.toFixed(2)} ${ph.toFixed(2)}]${rotate} /Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>`);
+  addObj(4,`<< /Type /XObject /Subtype /Image /Width ${cv.width} /Height ${cv.height} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${bin.length} >>\nstream\n${bin}\nendstream`);
+  addObj(5,`<< /Length ${content.length} >>\nstream\n${content}\nendstream`);
+  const xrefOff=pdf.length;
+  let xref='xref\n0 6\n0000000000 65535 f \n';
+  for(let i=1;i<=5;i++) xref+=String(off[i]).padStart(10,'0')+' 00000 n \n';
+  pdf+=xref+`trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n${xrefOff}\n%%EOF`;
+  download(new Blob([bytesFromBinaryString(pdf)],{type:'application/pdf'}),`shajra-tree-${orientation}.pdf`);
+}
+document.getElementById('mPdfLandscape').onclick=()=>{ closeMenu(); exportPdf('landscape'); };
+document.getElementById('mPdfPortrait').onclick=()=>{ closeMenu(); exportPdf('portrait'); };
 
 document.getElementById('hintX').onclick=()=>document.getElementById('hint').remove();
 
