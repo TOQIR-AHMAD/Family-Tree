@@ -47,12 +47,6 @@ Bilingual **Urdu / roman-English** node cards · collapsible branches · live se
   <li>Open <b><code>shajra-linked-tree.html</code></b> in any modern browser.</li>
 </ol>
 
-
-
-> [!NOTE]
-> Keep the three files in the **same folder** — the HTML links `styles.css` and `script.js`
-> by relative path. No build step, no server, and no external dependencies required.
-
 <details>
 <summary><b>🎨 Design notes</b></summary>
 
