@@ -40,13 +40,6 @@ Bilingual **Urdu / roman-English** node cards · collapsible branches · live se
 
 ---
 
-## 🚀 Usage
-
-<ol>
-  <li>Clone or download this repository.</li>
-  <li>Open <b><code>shajra-linked-tree.html</code></b> in any modern browser.</li>
-</ol>
-
 <details>
 <summary><b>🎨 Design notes</b></summary>
 
