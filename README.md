@@ -13,6 +13,12 @@ Bilingual **Urdu / roman-English** node cards · collapsible branches · live se
 <img alt="JavaScript" src="https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black" />
 <img alt="No build"   src="https://img.shields.io/badge/Zero_dependencies-0f8a7e?style=for-the-badge" />
 
+<br/><br/>
+
+<a href="https://toqir-ahmad.github.io/Family-Tree/"><img alt="Live demo" src="https://img.shields.io/badge/%F0%9F%8C%90_View_live_demo-24292f?style=for-the-badge" /></a>
+
+**Live:** https://toqir-ahmad.github.io/Family-Tree/
+
 </div>
 
 ---
@@ -34,7 +40,7 @@ Bilingual **Urdu / roman-English** node cards · collapsible branches · live se
 
 | File | Role |
 |------|------|
-| [`shajra-linked-tree.html`](shajra-linked-tree.html) | Markup / page structure |
+| [`index.html`](index.html) | Markup / page structure |
 | [`styles.css`](styles.css) | All styling |
 | [`script.js`](script.js) | Tree data, layout, rendering, pan/zoom, search &amp; export logic |
 
