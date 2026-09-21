@@ -79,8 +79,25 @@ let forest = [
         N("نور خان", "Noor Khan", [
           N("بھاٹی", "Bhaati", [
             N("داؤد", "Dawood", [
-              N("بشیر", "Basheer", []),
-              N("رشید", "Rasheed", []),
+              N("بشیر", "Basheer", [
+                N("اعجاز احمد", "Ijaz Ahmad", [
+                  N("آفتاب احمد", "Aftab Ahmad", []),
+                  N("طلحہ اعجاز", "Talha Ijaz", []),
+                  N("احمد اعجاز", "Ahmad Ijaz", []),
+                ]),
+                N("شہزاد احمد", "Shazad Ahmad", []),
+                N("ایاز احمد", "Ayaz Ahmad", [
+                  N("آکاش ایاز", "Akash Ayaz", []),
+                  N("ابوبکر ایاز", "Abu Baker Ayaz", []),
+                  N("حارث ایاز", "Haris Ayaz", []),
+                ]),
+                N("فیاض احمد", "Fiyaz Ahmad", []),
+              ]),
+              N("رشید", "Rasheed", [
+                N("سہیل عمران", "Sohail Imran", []),
+                N("طفیل عمران", "Tufail Imran", []),
+                N("محمد عادل", "M Adil", []),
+              ]),
             ]),
           ]),
         ]),
