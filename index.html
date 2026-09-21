@@ -6,41 +6,49 @@
 <meta name="color-scheme" content="light">
 <meta name="theme-color" content="#ffffff">
 <title>شجرہ نسب · Family Tree</title>
-<meta name="description" content="Interactive family tree (shajra nasab): pan, zoom, search, fold branches, export as PNG or PDF.">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230f766e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='5' r='2.5'/%3E%3Ccircle cx='5' cy='19' r='2.5'/%3E%3Ccircle cx='19' cy='19' r='2.5'/%3E%3Cpath d='M12 7.5V12M12 12H5v4.5M12 12h7v4.5'/%3E%3C/svg%3E">
+<meta name="description" content="Our family tree (shajra nasab): list and tree views, search, details, and a PDF made for A4 paper.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231d6b4f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 22v-7'/%3E%3Cpath d='M12 3a6.5 6.5 0 0 0-4.6 11.1A3.6 3.6 0 0 0 8.5 15h7a3.6 3.6 0 0 0 1.1-.9A6.5 6.5 0 0 0 12 3Z'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Nastaliq+Urdu:wght@400;500;700&family=Noto+Naskh+Arabic:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,500;0,600;1,400&family=Noto+Nastaliq+Urdu:wght@400;500;700&family=Noto+Naskh+Arabic:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
-<script>/* apply the saved theme before first paint */try{var t=localStorage.getItem('shajra-theme');if(t)document.documentElement.dataset.theme=t;}catch(e){}</script>
+<script>
+/* apply the saved theme and view before first paint (list on phones, tree elsewhere) */
+try{
+  var t=localStorage.getItem('shajra-theme'); if(t) document.documentElement.dataset.theme=t;
+  var v=localStorage.getItem('shajra-view');
+  document.documentElement.dataset.view=(v==='tree'||v==='list')?v:(window.matchMedia('(max-width:760px)').matches?'list':'tree');
+}catch(e){ document.documentElement.dataset.view='tree'; }
+</script>
 </head>
 <body>
 
 <!-- icon sprite -->
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
   <defs>
-    <symbol id="i-tree" viewBox="0 0 24 24"><circle cx="12" cy="5" r="2.5"/><circle cx="5" cy="19" r="2.5"/><circle cx="19" cy="19" r="2.5"/><path d="M12 7.5V12M12 12H5v4.5M12 12h7v4.5"/></symbol>
+    <symbol id="i-tree" viewBox="0 0 24 24"><path d="M12 22v-7"/><path d="M12 3a6.5 6.5 0 0 0-4.6 11.1A3.6 3.6 0 0 0 8.5 15h7a3.6 3.6 0 0 0 1.1-.9A6.5 6.5 0 0 0 12 3Z"/></symbol>
+    <symbol id="i-list" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1.2"/><circle cx="4.5" cy="12" r="1.2"/><circle cx="4.5" cy="18" r="1.2"/></symbol>
     <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
-    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
     <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
-    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
-    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z"/></symbol>
     <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
     <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
     <symbol id="i-fit" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></symbol>
     <symbol id="i-unfold" viewBox="0 0 24 24"><path d="m7 9 5-5 5 5M7 15l5 5 5-5"/></symbol>
     <symbol id="i-fold" viewBox="0 0 24 24"><path d="m7 4 5 5 5-5M7 20l5-5 5 5"/></symbol>
     <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .9-1 1.7M12 17h.01"/></symbol>
-    <symbol id="i-chevron-up" viewBox="0 0 24 24"><path d="m6 14 6-6 6 6"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></symbol>
+    <symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="m6 10 6 6 6-6"/></symbol>
+    <symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="m10 6 6 6-6 6"/></symbol>
     <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="8"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M4 19h16"/></symbol>
+    <symbol id="i-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></symbol>
   </defs>
 </svg>
 
 <header id="top">
   <a class="brand" href="./" aria-label="Family tree, home">
-    <svg class="ic brand-ic" aria-hidden="true"><use href="#i-tree"/></svg>
-    <span class="brand-ur">شجرہ نسب</span>
-    <span class="brand-en">Family Tree</span>
+    <span class="brand-mark"><svg class="ic" aria-hidden="true"><use href="#i-tree"/></svg></span>
+    <span class="brand-text"><span class="brand-ur">شجرہ نسب</span><span class="brand-en">Family Tree</span></span>
   </a>
 
   <div class="search" id="searchWrap">
@@ -51,44 +59,88 @@
     <div class="s-results" id="searchResults" role="listbox" aria-label="Search results" hidden></div>
   </div>
 
-  <div class="stats" id="stats" aria-live="polite"></div>
+  <div class="seg desk" role="group" aria-label="View">
+    <button class="seg-btn" data-view="list"><svg class="ic" aria-hidden="true"><use href="#i-list"/></svg>List <i class="u">فہرست</i></button>
+    <button class="seg-btn" data-view="tree"><svg class="ic" aria-hidden="true"><use href="#i-tree"/></svg>Tree <i class="u">شجرہ</i></button>
+  </div>
 
-  <div class="actions">
-    <button class="ibtn" id="themeBtn" aria-label="Switch to dark mode"><svg class="ic" aria-hidden="true"><use href="#i-moon"/></svg></button>
-    <div class="menuwrap">
-      <button class="ibtn" id="menuBtn" aria-label="Menu" aria-haspopup="true" aria-expanded="false"><svg class="ic" aria-hidden="true"><use href="#i-menu"/></svg></button>
-      <div class="menu" id="menu" role="menu">
-        <button role="menuitem" id="mExpand">Expand all <kbd>E</kbd></button>
-        <button role="menuitem" id="mCollapse">Collapse all <kbd>C</kbd></button>
-        <button role="menuitem" id="mDir">Reading direction <span class="k" id="dirK">RTL</span></button>
-        <button role="menuitem" id="mTheme">Dark mode <span class="k" id="themeK">Off</span></button>
-        <div class="sep" role="separator"></div>
-        <button role="menuitem" id="mPng">Save image (PNG)</button>
-        <button role="menuitem" id="mPdfA4">Save PDF · A4 pages</button>
-        <button role="menuitem" id="mPdfSheet">Save PDF · A4 single sheet <span class="k">small</span></button>
-        <button role="menuitem" id="mJson">Export data (JSON)</button>
-        <button role="menuitem" id="mPrint">Print</button>
-        <div class="sep" role="separator"></div>
-        <button role="menuitem" id="mTips">Tips &amp; shortcuts <kbd>?</kbd></button>
-      </div>
-    </div>
+  <div class="actions desk">
+    <button class="tbtn" data-menu="dlMenu" aria-haspopup="true" aria-expanded="false"><svg class="ic" aria-hidden="true"><use href="#i-download"/></svg>Download <i class="u">ڈاؤن لوڈ</i></button>
+    <button class="tbtn" data-menu="moreMenu" aria-haspopup="true" aria-expanded="false"><svg class="ic" aria-hidden="true"><use href="#i-more"/></svg>More <i class="u">مزید</i></button>
   </div>
 </header>
 
-<main id="stage" aria-label="Family tree canvas">
-  <div id="world"><svg id="links" aria-hidden="true" focusable="false"></svg></div>
-  <div id="gens" aria-hidden="true"></div>
-</main>
+<!-- popover menus (shared by the header buttons and the phone tab bar) -->
+<div class="menu" id="dlMenu" role="menu" hidden>
+  <div class="m-title">Download <i class="u">ڈاؤن لوڈ</i></div>
+  <button role="menuitem" data-act="pdfA4">PDF for A4 printing <span class="k">readable pages</span></button>
+  <button role="menuitem" data-act="pdfSheet">PDF, one A4 sheet <span class="k">small text</span></button>
+  <button role="menuitem" data-act="png">Image (PNG) <i class="u">تصویر</i></button>
+  <button role="menuitem" data-act="json">Data file (JSON)</button>
+  <div class="sep" role="separator"></div>
+  <button role="menuitem" data-act="print">Print <i class="u">پرنٹ</i></button>
+</div>
+<div class="menu" id="moreMenu" role="menu" hidden>
+  <div class="m-title">Options <i class="u">ترتیبات</i></div>
+  <button role="menuitem" data-act="theme">Dark mode <span class="k" id="themeK">Off</span></button>
+  <button role="menuitem" data-act="layout">Tree layout <span class="k" id="layoutK">Sideways</span></button>
+  <button role="menuitem" data-act="dir">Reading direction <span class="k" id="dirK">Right to left</span></button>
+  <div class="sep" role="separator"></div>
+  <button role="menuitem" data-act="expand">Expand all <i class="u">سب کھولیں</i></button>
+  <button role="menuitem" data-act="collapse">Collapse all <i class="u">سب بند کریں</i></button>
+  <div class="sep" role="separator"></div>
+  <button role="menuitem" data-act="tips">Tips &amp; shortcuts <i class="u">ہدایات</i></button>
+</div>
 
+<!-- TREE VIEW -->
+<div id="treeView">
+  <div id="stage" aria-label="Family tree canvas">
+    <div id="sizer"><div id="world" class="world"><svg id="links" aria-hidden="true" focusable="false"></svg></div></div>
+  </div>
+  <div id="gens" aria-hidden="true"></div>
+  <div id="dock" role="toolbar" aria-label="Tree controls">
+    <button class="dbtn" id="zoomOut" title="Zoom out"><svg class="ic" aria-hidden="true"><use href="#i-minus"/></svg><span>Zoom out</span></button>
+    <button class="dbtn lvl" id="zoomLvl" title="Reset zoom to 100%">100%</button>
+    <button class="dbtn" id="zoomIn" title="Zoom in"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg><span>Zoom in</span></button>
+    <span class="d-sep"></span>
+    <button class="dbtn" id="fit" title="Fit the tree to the screen"><svg class="ic" aria-hidden="true"><use href="#i-fit"/></svg><span>Fit</span></button>
+    <button class="dbtn desk" data-act="expand" title="Open every branch"><svg class="ic" aria-hidden="true"><use href="#i-unfold"/></svg><span>Expand all</span></button>
+    <button class="dbtn desk" data-act="collapse" title="Close every branch"><svg class="ic" aria-hidden="true"><use href="#i-fold"/></svg><span>Collapse all</span></button>
+    <span class="d-sep desk"></span>
+    <button class="dbtn desk" data-act="tips" title="Tips and shortcuts"><svg class="ic" aria-hidden="true"><use href="#i-help"/></svg><span>Help</span></button>
+  </div>
+</div>
+
+<!-- LIST VIEW -->
+<div id="listView">
+  <div class="list-wrap">
+    <div class="hero">
+      <div class="hero-ur">ہمارا خاندان</div>
+      <div class="hero-en" id="listCount"></div>
+      <div class="orn" aria-hidden="true">۞</div>
+    </div>
+    <div class="list-head">
+      <div class="list-hint">Tap ▸ to open a person's children · tap a name for details</div>
+      <div class="list-actions">
+        <button class="tbtn" data-act="expand"><svg class="ic" aria-hidden="true"><use href="#i-unfold"/></svg>Expand all</button>
+        <button class="tbtn" data-act="collapse"><svg class="ic" aria-hidden="true"><use href="#i-fold"/></svg>Collapse all</button>
+      </div>
+    </div>
+    <div id="rows" role="tree" aria-label="Family list"></div>
+  </div>
+</div>
+
+<!-- DETAILS -->
 <aside id="panel" aria-label="Person details" aria-hidden="true">
   <div class="p-handle" aria-hidden="true"></div>
   <div class="p-head">
-    <span class="p-kicker">Person</span>
-    <button class="ibtn p-close" id="panelClose" aria-label="Close details"><svg class="ic" aria-hidden="true"><use href="#i-close"/></svg></button>
+    <span class="p-kicker">Details <i class="u">تفصیل</i></span>
+    <button class="tbtn p-close" id="panelClose"><svg class="ic" aria-hidden="true"><use href="#i-close"/></svg>Close</button>
   </div>
   <div class="p-body">
     <h2 class="p-name" id="roName"></h2>
     <div class="p-roman" id="roRoman"></div>
+    <div class="orn" aria-hidden="true">۞</div>
     <div class="p-stats" id="roStats"></div>
     <div class="p-actions" id="roActions"></div>
     <div class="p-section" id="roFather"></div>
@@ -97,29 +149,27 @@
   </div>
 </aside>
 
-<div id="dock" role="toolbar" aria-label="View controls">
-  <button class="ibtn" id="zoomOut" aria-label="Zoom out"><svg class="ic" aria-hidden="true"><use href="#i-minus"/></svg></button>
-  <button class="lvl" id="zoomLvl" aria-label="Reset zoom to 100%">100%</button>
-  <button class="ibtn" id="zoomIn" aria-label="Zoom in"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg></button>
-  <span class="d-sep"></span>
-  <button class="ibtn" id="fit" aria-label="Fit whole tree on screen"><svg class="ic" aria-hidden="true"><use href="#i-fit"/></svg></button>
-  <button class="ibtn" id="dExpand" aria-label="Expand all branches"><svg class="ic" aria-hidden="true"><use href="#i-unfold"/></svg></button>
-  <button class="ibtn" id="dCollapse" aria-label="Collapse all branches"><svg class="ic" aria-hidden="true"><use href="#i-fold"/></svg></button>
-  <span class="d-sep"></span>
-  <button class="ibtn" id="tipsBtn" aria-label="Tips and keyboard shortcuts"><svg class="ic" aria-hidden="true"><use href="#i-help"/></svg></button>
-</div>
+<!-- phone tab bar -->
+<nav id="tabbar" class="mob" aria-label="Main">
+  <button class="tab" data-view="list"><svg class="ic" aria-hidden="true"><use href="#i-list"/></svg><span>List <i class="u">فہرست</i></span></button>
+  <button class="tab" data-view="tree"><svg class="ic" aria-hidden="true"><use href="#i-tree"/></svg><span>Tree <i class="u">شجرہ</i></span></button>
+  <button class="tab" data-menu="dlMenu" aria-haspopup="true"><svg class="ic" aria-hidden="true"><use href="#i-download"/></svg><span>Download</span></button>
+  <button class="tab" data-menu="moreMenu" aria-haspopup="true"><svg class="ic" aria-hidden="true"><use href="#i-more"/></svg><span>More <i class="u">مزید</i></span></button>
+</nav>
 
 <div id="tips" class="tips" role="dialog" aria-label="Tips and shortcuts" hidden>
   <div class="tips-head"><b>Tips &amp; shortcuts</b><button class="ibtn" id="tipsX" aria-label="Close tips"><svg class="ic" aria-hidden="true"><use href="#i-close"/></svg></button></div>
   <ul>
-    <li><b>Drag</b> to move around · <b>scroll or pinch</b> to zoom</li>
-    <li><b>Tap a person</b> to see their details and their line back to the top</li>
-    <li><b>Tap +N</b> under a card to unfold that branch; tap the arrow to fold it</li>
-    <li><b>Double-tap</b> a card to zoom in on it</li>
+    <li><b>List:</b> tap ▸ to open a person's children, tap a name for details.</li>
+    <li><b>Tree:</b> scroll to move around. Zoom with the buttons, a pinch, or Ctrl + scroll.</li>
+    <li><b>Details</b> show the father, children and the whole line back to the elders. Every name is tappable.</li>
+    <li><b>Download</b> gives you a PDF made for A4 paper.</li>
   </ul>
   <div class="keys">
     <span><kbd>/</kbd> search</span>
     <span><kbd>Esc</kbd> close</span>
+    <span><kbd>L</kbd> list</span>
+    <span><kbd>T</kbd> tree</span>
     <span><kbd>+</kbd> <kbd>−</kbd> zoom</span>
     <span><kbd>0</kbd> fit</span>
     <span><kbd>E</kbd> expand all</span>
