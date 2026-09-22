@@ -53,11 +53,7 @@ header{
 /* ---------- stage ---------- */
 #stage{
   position:fixed;inset:54px 0 0 0;overflow:hidden;cursor:grab;touch-action:none;
-  background:
-    repeating-linear-gradient(0deg,transparent 0 33px,var(--rule) 33px 34px),
-    linear-gradient(90deg,transparent 0 62px,var(--margin) 62px 63px,transparent 63px),
-    var(--paper);
-  background-attachment:local;
+  background:var(--paper);
 }
 #stage.panning{cursor:grabbing;}
 #world{position:absolute;top:0;left:0;transform-origin:0 0;}
@@ -95,14 +91,53 @@ header{
 
 path.edge{fill:none;stroke:var(--ink);stroke-width:1.7;transition:stroke .14s,stroke-width .14s,opacity .14s;}
 path.edge.hot{stroke:var(--amber);stroke-width:2.8;}
+path.edge.kin{stroke:var(--sel);stroke-width:2.4;}
 path.edge.dim{opacity:.22;}
+
+/* lineage animation: when a person is selected, lines draw in one generation
+   at a time — down the ancestor line (amber) to them, then on through their
+   descendants (teal). --i = generation of the parent, --step = time per generation. */
+path.edge.hot,path.edge.kin{
+  stroke-dasharray:1 1;stroke-dashoffset:1;
+  animation:edgeDraw var(--step,.32s) linear forwards;
+  animation-delay:calc(var(--i,0) * var(--step,.32s));
+}
+@keyframes edgeDraw{to{stroke-dashoffset:0;}}
+/* moving dashes on top of a drawn line, travelling parent → child */
+path.flow{
+  fill:none;stroke:#fff;stroke-width:1.3;stroke-linecap:round;stroke-dasharray:3 13;opacity:0;
+  animation:edgeFlow 1.1s linear infinite,flowIn .3s ease forwards;
+  animation-delay:0s,calc((var(--i,0) + 1) * var(--step,.32s));
+}
+@keyframes edgeFlow{from{stroke-dashoffset:16;}to{stroke-dashoffset:0;}}
+@keyframes flowIn{to{opacity:.85;}}
+/* a card lights up with a pulse when its line reaches it */
+.node.lineage{--pulse:rgba(176,106,29,.4);}
+.node.kin{border-color:var(--sel);--pulse:rgba(15,138,126,.35);}
+.node.selected{--pulse:rgba(15,138,126,.5);}
+.node.lineage,.node.kin,.node.selected{
+  animation:nodeArrive .6s ease-out backwards;
+  animation-delay:calc(var(--i,0) * var(--step,.32s));
+}
+@keyframes nodeArrive{
+  0%{border-color:var(--ink);box-shadow:var(--shadow);}
+  35%{box-shadow:0 0 0 8px var(--pulse),var(--shadow);}
+}
+@media (prefers-reduced-motion:reduce){
+  path.edge.hot,path.edge.kin,.node.lineage,.node.kin,.node.selected,.lineage-list li{animation:none;stroke-dashoffset:0;}
+  path.flow{display:none;}
+}
+@media print{
+  path.edge.hot,path.edge.kin,.node.lineage,.node.kin,.node.selected,.lineage-list li{animation:none;stroke-dashoffset:0;}
+  path.flow{display:none;}
+}
 
 /* ---------- edit panel ---------- */
 #panel{
   position:fixed;top:54px;right:0;bottom:0;width:308px;z-index:35;
   background:linear-gradient(180deg,#fbf8ef,#f6efde);border-left:1px solid var(--rule);
   box-shadow:-12px 0 30px -22px rgba(22,34,79,.5);transform:translateX(100%);
-  transition:transform .22s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;padding:16px;
+  transition:transform .22s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;padding:16px;overflow-y:auto;
 }
 #panel.open{transform:translateX(0);}
 #panel h2{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 12px;display:flex;justify-content:space-between;align-items:center;}
@@ -115,7 +150,22 @@ path.edge.dim{opacity:.22;}
 .ro-row b{font-weight:600;text-align:right;}
 .ro-row b.ur{font-family:var(--ar);font-size:17px;font-weight:500;direction:rtl;}
 .ro-row.col{flex-direction:column;align-items:stretch;gap:5px;}
-.ro-row.col b.path{text-align:right;width:100%;direction:rtl;line-height:1.9;font-size:16px;}
+/* "line from top": vertical list of ancestors joined by a connector, appearing
+   in step with the tree animation */
+.lineage-list{list-style:none;margin:2px 0 0;padding:0;direction:rtl;}
+.lineage-list li{
+  position:relative;display:flex;align-items:center;gap:8px;padding:1px 24px 1px 0;cursor:pointer;border-radius:8px;
+  animation:listIn .35s ease-out backwards;animation-delay:calc(var(--i,0) * var(--step,.32s));
+}
+.lineage-list li:hover{background:rgba(176,106,29,.08);}
+.lineage-list li::before{content:"";position:absolute;right:4px;top:50%;margin-top:-5px;width:10px;height:10px;box-sizing:border-box;border-radius:50%;background:var(--card);border:2px solid var(--amber);z-index:1;}
+.lineage-list li::after{content:"";position:absolute;right:8px;top:50%;height:100%;width:2px;background:var(--amber);opacity:.5;}
+.lineage-list li:last-child::after{display:none;}
+.lineage-list li b.ur{font-family:var(--ar);font-size:17px;font-weight:500;color:var(--ink-deep);line-height:1.75;}
+.lineage-list li em{font-family:var(--sans);font-size:11px;color:var(--muted);direction:ltr;}
+.lineage-list li.me::before{background:var(--sel);border-color:var(--sel);}
+.lineage-list li.me b.ur{color:var(--sel);}
+@keyframes listIn{from{opacity:0;transform:translateY(-4px);}}
 
 /* ---------- floating zoom cluster ---------- */
 #zoomdock{

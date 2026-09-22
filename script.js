@@ -72,6 +72,7 @@ let forest = [
           N("سمیر خان", "Sumair Khan", [
             N("اقبال خان", "Iqbal Khan", []),
             N("اسحاق", "Ishaq", [
+              N("مقصود", "Maqsood", []),
               N("جمشید", "Jamsheed", []),
               N("تصور", "Tasawar", []),
               N("ریاست", "Riasat", []),
@@ -296,6 +297,12 @@ function ancestorChain(id){
   while(cur!=null){ set.add(cur); cur=parentOf[cur]; }
   return set;
 }
+function descendantIds(id){
+  const set=new Set();
+  function w(n){ (n.children||[]).forEach(c=>{ set.add(c.id); if(!collapsed.has(c.id)) w(c); }); }
+  const n=findNode(id); if(n && !collapsed.has(id)) w(n);
+  return set;
+}
 function matchIds(){
   const t=searchTerm.trim().toLowerCase();
   const set=new Set();
@@ -316,24 +323,40 @@ function render(){
   svg.setAttribute('width',dims.w); svg.setAttribute('height',dims.h);
 
   const lineage = selectedId!=null ? ancestorChain(selectedId) : null;
+  const kin = selectedId!=null ? descendantIds(selectedId) : null;
   const matches = searchTerm.trim() ? matchIds() : null;
 
-  // edges
-  let paths='';
+  // animation pacing: one "step" per generation, from the top down through
+  // the selected person to their deepest visible descendant (~3s max overall)
+  if(lineage){
+    const deepest=Math.max(depthOf[selectedId],...[...kin].map(id=>depthOf[id]));
+    document.documentElement.style.setProperty('--step',Math.min(0.32,3/Math.max(1,deepest)).toFixed(3)+'s');
+  }
+
+  // edges (animated ones get pathLength=1 so they can be "drawn" in via dashoffset;
+  // a flow overlay on top shows the direction parent → child)
+  let paths='', flows='';
   function walkE(node){
     if(collapsed.has(node.id)) return;
     (node.children||[]).forEach(c=>{
       const p=pos[node.id], q=pos[c.id];
-      let cls='edge';
-      if(lineage && lineage.has(node.id) && lineage.has(c.id)) cls+=' hot';
-      else if(lineage) cls+=' dim';
+      const d=elbow(p.x+NODE_W/2,p.y+NODE_H,q.x+NODE_W/2,q.y);
+      const onLine=lineage && lineage.has(node.id) && lineage.has(c.id);
+      const below=kin && kin.has(c.id);
+      let cls='edge', extra='';
+      if(onLine) cls+=' hot'; else if(below) cls+=' kin'; else if(lineage) cls+=' dim';
       if(matches) cls+=' dim';
-      paths+=`<path class="${cls}" d="${elbow(p.x+NODE_W/2,p.y+NODE_H,q.x+NODE_W/2,q.y)}"/>`;
+      if(onLine||below){
+        const i=` style="--i:${depthOf[node.id]}"`;
+        extra=` pathLength="1"${i}`;
+        if(!matches) flows+=`<path class="flow" d="${d}"${i}/>`;
+      }
+      paths+=`<path class="${cls}"${extra} d="${d}"/>`;
       walkE(c);
     });
   }
   forest.forEach(walkE);
-  svg.innerHTML=paths;
+  svg.innerHTML=paths+flows;
 
   // nodes
   [...world.querySelectorAll('.node')].forEach(n=>n.remove());
@@ -345,10 +368,15 @@ function render(){
     const el=document.createElement('div');
     let cls='node'+(isTop?' root':'');
     if(node.id===selectedId) cls+=' selected';
-    if(lineage){ if(lineage.has(node.id)){ if(node.id!==selectedId) cls+=' lineage'; } else cls+=' dim'; }
+    if(lineage){
+      if(lineage.has(node.id)){ if(node.id!==selectedId) cls+=' lineage'; }
+      else if(kin.has(node.id)) cls+=' kin';
+      else cls+=' dim';
+    }
     if(matches){ if(matches.has(node.id)) cls+=' match'; else cls+=' dim'; }
     el.className=cls;
     el.style.left=p.x+'px'; el.style.top=p.y+'px'; el.dataset.id=node.id;
+    if(lineage && (lineage.has(node.id)||kin.has(node.id))) el.style.setProperty('--i',depth);
     let inner=
       `<div class="meta"><span>gen ${depth}</span>`+
       `<span class="tag">${isTop?'TOP':(hasKids?'':'leaf')}</span></div>`+
@@ -502,13 +530,21 @@ function selectNode(id){
   rows+=`<div class="ro-row"><span>Generation</span><b>${top?'top branch':depthOf[id]}</b></div>`;
   if(par) rows+=`<div class="ro-row"><span>Father</span><b class="ur">${escapeHtml(par.ur)}</b></div>`;
   rows+=`<div class="ro-row"><span>Children</span><b>${kids}</b></div>`;
-  const chain=[...ancestorChain(id)].map(x=>findNode(x));
+  // ancestors listed top → down, ending with this person; each entry is tappable
+  const chain=[...ancestorChain(id)].reverse().map(x=>findNode(x));
   if(chain.length>1){
-    rows+=`<div class="ro-row col"><span>Line to top</span><b class="ur path">${escapeHtml(chain.map(x=>x.ur).join(' ‹ '))}</b></div>`;
+    rows+=`<div class="ro-row col"><span>Line from top</span><ol class="lineage-list">`+
+      chain.map((x,i)=>`<li class="${x.id===id?'me':''}" data-id="${x.id}" style="--i:${i}">`+
+        `<b class="ur">${escapeHtml(x.ur)}</b><em>${escapeHtml(x.en)}</em></li>`).join('')+
+      `</ol></div>`;
   }
   document.getElementById('roRows').innerHTML=rows;
   panel.classList.add('open'); render();
 }
+document.getElementById('roRows').addEventListener('click',e=>{
+  const li=e.target.closest('.lineage-list li');
+  if(li){ const id=+li.dataset.id; selectNode(id); centerOn(id); }
+});
 function deselect(){ selectedId=null; panel.classList.remove('open'); render(); }
 document.getElementById('panelClose').onclick=deselect;
 
@@ -566,8 +602,6 @@ async function renderFullCanvas(){
   const cv=document.createElement('canvas'); cv.width=W*dpr; cv.height=H*dpr;
   const ctx=cv.getContext('2d'); ctx.scale(dpr,dpr);
   ctx.fillStyle='#f3ecdb'; ctx.fillRect(0,0,W,H);
-  ctx.strokeStyle='#ddd0b3'; ctx.lineWidth=1;
-  for(let y=0;y<H;y+=34){ctx.beginPath();ctx.moveTo(0,y+.5);ctx.lineTo(W,y+.5);ctx.stroke();}
   ctx.strokeStyle='#22357a'; ctx.lineWidth=1.7;
   function walkE(node){ (node.children||[]).forEach(c=>{ const p=P[node.id],q=P[c.id]; const px=p.x+NODE_W/2,py=p.y+NODE_H,cx=q.x+NODE_W/2,cy=q.y,m=py+(cy-py)/2; ctx.beginPath();ctx.moveTo(px,py);ctx.lineTo(px,m);ctx.lineTo(cx,m);ctx.lineTo(cx,cy);ctx.stroke(); walkE(c);});}
   forest.forEach(walkE);
