@@ -126,7 +126,49 @@ let forest = [
           ]),
           N("نذیرا", "Nazeera", [
             N("سیپی چھلا", "Seepi Chhalla", [
-              N("مجید خان", "Majeed Khan", []),
+              N("مجید خان", "Majeed Khan", [
+                N("نور محمد", "Noor Muhammad", [
+                  N("عزیز", "Aziz", [
+                    N("زاہد", "Zahid", [
+                      N("محمد مومن", "Muhammad Momin", []),
+                      N("محمد موبز", "Muhammad Mobiz", []),
+                    ]),
+                    N("جمشید", "Jamsheed", [
+                      N("طلال", "Talal", []),
+                      N("بلال", "Bilal", []),
+                    ]),
+                    N("شاہد", "Shahid", [
+                      N("شعبان", "Shaban", []),
+                      N("احمر", "Ahmar", []),
+                    ]),
+                  ]),
+                  N("ارشد", "Arshad", [
+                    N("عدن", "Adan", []),
+                    N("ذیشان", "Zeeshan", []),
+                    N("سفیان", "Sufian", []),
+                  ]),
+                  N("عثمان", "Usman", [
+                    N("حامد", "Hamid", []),
+                    N("عاطف", "Atif", []),
+                  ]),
+                  N("ذاکر", "Zakir", [
+                    N("طیب", "Taiab", []),
+                    N("احمد", "Ahmad", []),
+                  ]),
+                  N("صابر", "Sabir", [
+                    N("فائز", "Faiez", []),
+                    N("ربیع", "Rabi", []),
+                    N("حسن", "Hassan", []),
+                  ]),
+                ]),
+                N("امرت خان", "Imrat Khan", [
+                  N("نوید", "Naveed", []),
+                  N("ساجد", "Sajid", []),
+                  N("واجد", "Wajid", []),
+                  N("عامر", "Amir", []),
+                  N("نادر", "Nadir", []),
+                ]),
+              ]),
             ]),
           ]),
           N("جناب", "Janab", []),
