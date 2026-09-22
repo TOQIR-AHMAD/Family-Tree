@@ -54,6 +54,7 @@ let forest = [
                 ]),
                 N("عبدالرؤف", "Abdul Rauf", [
                   N("محمد", "Muhammad", []),
+                  N("موسیٰ", "Musa", []),
                 ]),
               ]),
               N("کبیر احمد", "Kabir Ahmad", [
@@ -70,10 +71,28 @@ let forest = [
           ]),
           N("سمیر خان", "Sumair Khan", [
             N("اقبال خان", "Iqbal Khan", []),
-            N("اسحاق", "Ishaq", []),
-            N("الیاس", "Ilyas", []),
-            N("شیر خان", "Shair Khan", []),
-            N("عبداللہ", "Abdullah", []),
+            N("اسحاق", "Ishaq", [
+              N("جمشید", "Jamsheed", []),
+              N("تصور", "Tasawar", []),
+              N("ریاست", "Riasat", []),
+              N("شاکر", "Shakir", []),
+              N("شہروز", "Shehroz", []),
+            ]),
+            N("الیاس", "Ilyas", [
+              N("شاہد", "Shahid", []),
+              N("شہزاد", "Shahzad", []),
+              N("شہباز", "Shahbaz", []),
+              N("ذیشان", "Zeeshan", []),
+            ]),
+            N("شیر خان", "Shair Khan", [
+              N("ابراہیم", "Ibrahim", []),
+              N("طارق", "Tariq", []),
+              N("زبیر", "Zubair", []),
+            ]),
+            N("عبداللہ", "Abdullah", [
+              N("ظہیر", "Zaheer", []),
+              N("کامران", "Kamran", []),
+            ]),
           ]),
         ]),
         N("نور خان", "Noor Khan", [
@@ -82,14 +101,14 @@ let forest = [
               N("بشیر", "Basheer", [
                 N("اعجاز احمد", "Ijaz Ahmad", [
                   N("آفتاب احمد", "Aftab Ahmad", []),
-                  N("طلحہ اعجاز", "Talha Ijaz", []),
-                  N("احمد اعجاز", "Ahmad Ijaz", []),
+                  N("طلحہ", "Talha", []),
+                  N("احمد", "Ahmad", []),
                 ]),
                 N("شہزاد احمد", "Shazad Ahmad", []),
                 N("ایاز احمد", "Ayaz Ahmad", [
-                  N("آکاش ایاز", "Akash Ayaz", []),
-                  N("ابوبکر ایاز", "Abu Baker Ayaz", []),
-                  N("حارث ایاز", "Haris Ayaz", []),
+                  N("آکاش", "Akash", []),
+                  N("ابوبکر", "Abu Baker", []),
+                  N("حارث", "Haris", []),
                 ]),
                 N("فیاض احمد", "Fiyaz Ahmad", [
                   N("طہٰ", "Tahaa", []),
