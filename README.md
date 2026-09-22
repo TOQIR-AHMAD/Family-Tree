@@ -4,7 +4,7 @@
 
 ### An interactive, pan &amp; zoom family-tree (shajra) viewer for the browser
 
-Bilingual **Urdu / roman-English** node cards · collapsible branches · live search · PNG / JSON / print export
+Bilingual **Urdu / roman-English** node cards · collapsible branches · live search · PNG / PDF / print export
 
 <br/>
 
@@ -31,8 +31,7 @@ Bilingual **Urdu / roman-English** node cards · collapsible branches · live se
 | 👤 **Inspect** | Tap a person to see their details and their line back to the top |
 | 🌿 **Fold** | Collapse / expand any branch via the amber circle under a card |
 | 🔎 **Search** | Find anyone by Urdu or roman name — matches highlight, first result centers |
-| 💾 **Export** | Save the full tree as **PNG** or **JSON**, or **print** it |
-| ↔️ **Direction** | Toggle reading direction (**RTL / LTR**) |
+| 💾 **Export** | Save the full tree as **PNG** or **PDF**, or **print** it |
 
 ---
 

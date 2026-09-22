@@ -23,12 +23,12 @@
     <div class="menu" id="menu">
       <button id="mExpand">Expand all</button>
       <button id="mCollapse">Collapse all</button>
-      <button id="mDir">Reading direction <span class="k" id="dirK">RTL</span></button>
       <div class="sep"></div>
-      <button id="mPng">Save image (PNG)</button>
-      <button id="mPdfLandscape">Save PDF — horizontal</button>
-      <button id="mPdfPortrait">Save PDF — vertical</button>
-      <button id="mJson">Export data (JSON)</button>
+      <span class="grp">Save as</span>
+      <button id="mPng" title="Save image (PNG)">PNG</button>
+      <button id="mPdfLandscape" title="Save PDF — horizontal">PDF ↔</button>
+      <button id="mPdfPortrait" title="Save PDF — vertical">PDF ↕</button>
+      <div class="sep"></div>
       <button id="mPrint">Print</button>
     </div>
   </div>
@@ -48,13 +48,6 @@
   <span class="lvl" id="zoomLvl">100%</span>
   <button id="zoomIn">+</button>
   <button class="lbl" id="fit">Fit</button>
-</div>
-
-<div id="hint">
-  <button class="x" id="hintX">&times;</button>
-  <b>Tip:</b> tap a person to see their details — the lines animate down from the top to them
-  (amber) and on to their children (teal), so you can see who belongs to whom. Tap the
-  <b>amber circle</b> under a card to fold/unfold that branch. Use search up top to find anyone.
 </div>
 
 <script src="script.js"></script>
