@@ -300,10 +300,10 @@ let searchTerm="";
    ============================================================ */
 /* scale factor for each generation, from head-counts of the full tree
    (ignores folding, so sizes stay put when branches open and close) */
-function generationScales(){
+function generationScales(roots){
   const cnt=[];
   function w(n,d){ cnt[d]=(cnt[d]||0)+1; (n.children||[]).forEach(c=>w(c,d+1)); }
-  forest.forEach(t=>w(t,0));
+  roots.forEach(t=>w(t,0));
   const most=Math.max(1,...cnt), S=[];
   cnt.forEach((c,d)=>{
     const s=Math.min(GEN_MAX,GEN_MIN*Math.pow(most/c,GEN_POW));
@@ -316,10 +316,11 @@ function generationScales(){
    packed as tightly as its shape allows, so a small branch tucks in beside a big
    one instead of claiming a full-height strip. Cards, connectors and stacked
    columns are all boxes [x0,x1,y0,y1]; neighbouring families are pushed together
-   until their boxes would touch. Positions carry box size (w,h) and scale (s). */
-function computeLayout(collapsedSet){
+   until their boxes would touch. Positions carry box size (w,h) and scale (s).
+   `roots` defaults to the whole forest. */
+function computeLayout(collapsedSet,roots=forest){
   const P={}, par={}, dep={};
-  const GS=generationScales();
+  const GS=generationScales(roots);
   const S=d=>GS[Math.min(d,GS.length-1)];
   const rows=[0];                                  // top y of each generation
   const rowY=d=>{ while(rows.length<=d){ const k=rows.length-1; rows.push(rows[k]+NODE_H*S(k)+V_GAP*(S(k)+S(k+1))/2); } return rows[d]; };
@@ -352,7 +353,7 @@ function computeLayout(collapsedSet){
     boxes.push([offs[0]-mid-2,offs[offs.length-1]-mid+2,y+h,rowY(d+1)]);   // connector bar
     return {cards,boxes};
   }
-  const trees=rtl?forest.slice().reverse():forest;
+  const trees=rtl?roots.slice().reverse():roots;
   const fams=trees.map(t=>pack(t,0,null)), offs=packRow(fams,TREE_GAP), cards=[];
   fams.forEach((f,i)=>shiftInto(f,offs[i],cards,[]));
 
@@ -703,14 +704,8 @@ function selectNode(id){
   selectedId=id; const n=findNode(id); if(!n) return;
   const kids=(n.children||[]).length, top=parentOf[id]===null;
   const pid=parentOf[id], par=pid!=null?findNode(pid):null;
-  const b=branchOf[id], head=b>=0?findNode(branchHeads[b]):null;
-  document.getElementById('roHero').style.cssText=colorVars(id);
-  document.getElementById('roAvatar').textContent=[...(n.ur||'').trim()][0]||'—';
   document.getElementById('roName').textContent=n.ur||'—';
   document.getElementById('roRoman').textContent=n.en||'';
-  document.getElementById('roBranch').innerHTML=head
-    ? `<i></i><b class="ur">${escapeHtml(head.ur)}</b>${escapeHtml(head.en)} branch`
-    : `<i></i>${top?'Top of the tree':'Elder line'}`;
   let rows=`<div class="tiles">`+
     `<div><b>${top?'Top':depthOf[id]}</b><span>Generation</span></div>`+
     `<div><b>${kids}</b><span>Children</span></div>`+
@@ -794,20 +789,28 @@ document.getElementById('mCollapse').onclick=()=>{ collapseAll(); closeMenu(); }
 function download(blob,name){ const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1500); }
 document.getElementById('mPrint').onclick=()=>{ const c=collapsed; collapsed=new Set(); render(); fitToScreen(); setTimeout(()=>{window.print(); collapsed=c; render();},150); closeMenu(); };
 
-/* Render the FULL tree (ignoring collapse state) to an off-screen canvas.
-   Shared by the PNG and PDF exporters. */
-async function renderFullCanvas(){
-  await (document.fonts?document.fonts.ready:Promise.resolve());
-  const L=computeLayout(new Set()); const P=L.pos, par=L.parentOf, dep=L.depthOf;
-  const W=L.w, H=L.h, dpr=2;
-  const cv=document.createElement('canvas'); cv.width=W*dpr; cv.height=H*dpr;
-  const ctx=cv.getContext('2d'); ctx.scale(dpr,dpr);
+/* Draw a laid-out tree `L` (of `roots`) to an off-screen canvas at `k` pixels
+   per tree unit; `folded` = branches drawn folded. With `hl` = {sel, line} it
+   is drawn highlighted the way the screen shows a selected person: gold up the
+   line to the top, teal for the family below. Shared by all the image exporters. */
+const GOLD='#c8901c', TEAL='#0e8f7e';
+const fontsReady=()=>document.fonts?document.fonts.ready:Promise.resolve();
+function drawTree(L,roots,folded,k,hl){
+  const P=L.pos, par=L.parentOf, dep=L.depthOf;
+  const cv=document.createElement('canvas'); cv.width=Math.max(1,Math.round(L.w*k)); cv.height=Math.max(1,Math.round(L.h*k));
+  const ctx=cv.getContext('2d'); ctx.scale(k,k);
   computeBranches();
-  ctx.fillStyle='#f5f0e6'; ctx.fillRect(0,0,W,H);
-  Object.keys(L.edges).forEach(id=>{ ctx.strokeStyle=branchColor(id); ctx.lineWidth=1.8*Math.max(1,P[id].s); ctx.stroke(new Path2D(L.edges[id])); });
+  ctx.fillStyle='#f5f0e6'; ctx.fillRect(0,0,L.w,L.h);
+  Object.keys(L.edges).forEach(id=>{
+    const on=hl&&hl.line.has(+id);
+    ctx.strokeStyle=on?GOLD:hl?TEAL:branchColor(id); ctx.lineWidth=(on?3:hl?2.6:1.8)*Math.max(1,P[id].s);
+    ctx.stroke(new Path2D(L.edges[id]));
+  });
   function rr(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
   // each card is drawn at full size, then scaled to its generation's size
-  function walkN(node){ const p=P[node.id]; const isTop=par[node.id]===null; const c=branchColor(node.id);
+  function walkN(node){ const p=P[node.id]; if(!p) return; const isTop=par[node.id]===null; const c=branchColor(node.id);
+    // highlight as [top bar, border, halo colour, halo width], like .selected / .lineage / .kin
+    const h=!hl?null:node.id===hl.sel?[TEAL,TEAL,'rgba(14,143,126,.22)',4]:hl.line.has(node.id)?[GOLD,GOLD,'rgba(200,144,28,.25)',3]:[c,TEAL];
     ctx.save(); ctx.translate(p.x,p.y); ctx.scale(p.s,p.s);
     // card: soft shadow, branch-tinted wash, coloured top bar, tinted border
     rr(0,0,NODE_W,NODE_H,15);
@@ -816,22 +819,35 @@ async function renderFullCanvas(){
     ctx.save(); ctx.shadowColor='rgba(28,37,65,.16)'; ctx.shadowBlur=14; ctx.shadowOffsetY=5; ctx.fillStyle=g; ctx.fill(); ctx.restore();
     // top bar that follows the rounded corners (like the cards' inset shadow):
     // fill the card in colour, then cover all but its top with the card moved down
-    ctx.save(); ctx.clip(); ctx.fillStyle=c; ctx.fillRect(0,0,NODE_W,NODE_H);
+    ctx.save(); ctx.clip(); ctx.fillStyle=h?h[0]:c; ctx.fillRect(0,0,NODE_W,NODE_H);
     ctx.translate(0,5); rr(0,0,NODE_W,NODE_H,15); ctx.fillStyle=g; ctx.fill(); ctx.restore();
-    rr(0,0,NODE_W,NODE_H,15); ctx.lineWidth=1.5; ctx.strokeStyle=isTop?'#ddb868':tint(c,.38); ctx.stroke();
+    if(h&&h[2]){ const w=h[3]; rr(-w/2,-w/2,NODE_W+w,NODE_H+w,15+w/2); ctx.lineWidth=w; ctx.strokeStyle=h[2]; ctx.stroke(); }
+    rr(0,0,NODE_W,NODE_H,15); ctx.lineWidth=1.5; ctx.strokeStyle=h?h[1]:isTop?'#ddb868':tint(c,.38); ctx.stroke();
     ctx.fillStyle=c; ctx.font='700 8.5px Inter,sans-serif'; ctx.textAlign='left'; ctx.fillText('GEN '+dep[node.id],12,21);
     if(isTop){
-      rr(NODE_W-45,11,33,14,6); ctx.fillStyle='#c8901c'; ctx.fill();
+      rr(NODE_W-45,11,33,14,6); ctx.fillStyle=GOLD; ctx.fill();
       ctx.fillStyle='#fff'; ctx.font='700 7.5px Inter,sans-serif'; ctx.textAlign='center'; ctx.fillText('TOP',NODE_W-28.5,21);
     }
     ctx.fillStyle='#1c2541'; ctx.direction='rtl'; ctx.textAlign='center'; ctx.font='500 21px "Noto Nastaliq Urdu","Noto Naskh Arabic",serif';
     ctx.fillText(node.ur||'—',NODE_W/2,56,NODE_W-20);
     ctx.direction='ltr'; ctx.fillStyle='#8b826f'; ctx.font='500 10.5px Inter,sans-serif'; ctx.fillText(node.en||'',NODE_W/2,80,NODE_W-16);
+    // a folded branch keeps its "+N" pill so it doesn't read as childless
+    if(folded.has(node.id) && (node.children||[]).length){
+      const t='+'+(descCount[node.id]||0); ctx.font='700 11px Inter,sans-serif';
+      const bw=Math.max(24,ctx.measureText(t).width+17);
+      rr(NODE_W/2-bw/2,NODE_H-12,bw,24,12); ctx.fillStyle=c; ctx.fill();
+      ctx.fillStyle='#fff'; ctx.textBaseline='middle'; ctx.fillText(t,NODE_W/2,NODE_H); ctx.textBaseline='alphabetic';
+    }
     ctx.restore();
     (node.children||[]).forEach(walkN);
   }
-  forest.forEach(walkN);
-  return {cv,W,H};
+  roots.forEach(walkN);
+  return cv;
+}
+/* the FULL tree, ignoring collapse state (PNG and PDF exports) */
+async function renderFullCanvas(){
+  await fontsReady();
+  return {cv:drawTree(computeLayout(new Set()),forest,new Set(),2)};
 }
 
 /* PNG — always exports the FULL tree regardless of collapse state */
@@ -875,6 +891,33 @@ async function exportPdf(orientation){
 }
 document.getElementById('mPdfLandscape').onclick=()=>{ closeMenu(); exportPdf('landscape'); };
 document.getElementById('mPdfPortrait').onclick=()=>{ closeMenu(); exportPdf('portrait'); };
+
+/* ============================================================
+   SCREENSHOT OF A HIGHLIGHTED LINE
+   the selected person's highlight on its own: the line from the top down to
+   them (gold) and their family below as it is unfolded now (teal); everyone
+   else is left out
+   ============================================================ */
+function saveLineShot(){
+  const id=selectedId, n=findNode(id); if(!n) return;
+  // top → selected, from the full tree so it works even when an elder is folded
+  const up=computeLayout(new Set()).parentOf, chain=[];
+  for(let cur=id;cur!=null;cur=up[cur]) chain.unshift(findNode(cur));
+  // elders carry only the next person down the line; the selected keeps their family
+  let root=n;
+  for(let i=chain.length-2;i>=0;i--) root={...chain[i],children:[root]};
+  const line=new Set(chain.map(x=>x.id));
+  const folded=new Set([...collapsed].filter(x=>x===id||!line.has(x)));
+  fontsReady().then(()=>{
+    const L=computeLayout(folded,[root]);
+    // smallest card at least twice its full size, within what one canvas allows
+    const minS=Math.min(...Object.values(L.pos).map(p=>p.s));
+    const k=Math.min(2/minS,8192/Math.max(L.w,L.h),Math.sqrt(16e6/(L.w*L.h)));
+    const name=(n.en||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||id;
+    drawTree(L,[root],folded,k,{sel:id,line}).toBlob(b=>download(b,`shajra-${name}.png`),'image/png');
+  });
+}
+document.getElementById('lineShot').onclick=saveLineShot;
 
 /* ============================================================
    BOOT

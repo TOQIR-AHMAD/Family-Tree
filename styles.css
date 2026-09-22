@@ -204,25 +204,14 @@ path.flow{
 #panel .close{width:30px;height:30px;padding:0;border-radius:50%;border:none;background:var(--bg);color:var(--ink-2);display:grid;place-items:center;cursor:pointer;}
 #panel .close:hover{background:var(--bg-deep);color:var(--ink);}
 #panel .close .i{width:14px;height:14px;stroke-width:2.2;}
-.hero{
-  position:relative;flex:none;text-align:center;padding:20px 14px 16px;border-radius:16px;overflow:hidden;
-  background:linear-gradient(180deg,var(--bs,#faf5ea),#fff 80%);border:1px solid var(--bl,var(--line));
+.ro-name{font-family:var(--ar);font-size:30px;font-weight:500;color:var(--ink);direction:rtl;text-align:right;line-height:1.7;margin:2px 4px 0;}
+.ro-roman{font-style:italic;color:var(--muted);text-align:right;margin:0 4px 4px;}
+.p-shot{
+  flex:none;display:flex;align-items:center;justify-content:center;gap:8px;height:40px;margin-top:10px;
+  border:none;border-radius:12px;background:var(--navy);color:#fff;font-size:13px;font-weight:600;cursor:pointer;
+  box-shadow:0 8px 16px -10px rgba(24,33,74,.7);transition:background .15s;
 }
-.hero::before{content:"";position:absolute;inset:0 0 auto 0;height:4px;background:var(--bc,var(--gold));}
-.avatar{
-  width:60px;height:60px;margin:0 auto 4px;border-radius:50%;display:grid;place-items:center;
-  font-family:var(--ar);font-size:27px;line-height:1;padding-bottom:3px;color:#fff;
-  background:radial-gradient(circle at 30% 25%,rgba(255,255,255,.28),transparent 60%),var(--bc,var(--gold));
-  box-shadow:0 0 0 4px #fff,0 0 0 5px var(--bl,var(--line)),0 10px 20px -10px var(--bc,var(--gold));
-}
-.ro-name{font-family:var(--ar);font-size:30px;font-weight:500;color:var(--ink);direction:rtl;line-height:1.75;}
-.ro-roman{font-size:13px;font-weight:500;color:var(--muted);margin-top:6px;}
-.ro-branch{
-  display:inline-flex;align-items:center;gap:7px;margin-top:11px;padding:3px 11px 3px 9px;border-radius:20px;
-  background:#fff;border:1px solid var(--bl,var(--line));font-size:11.5px;font-weight:600;color:var(--bc,var(--gold-deep));
-}
-.ro-branch i{width:8px;height:8px;border-radius:50%;background:var(--bc,var(--gold));}
-.ro-branch b.ur{font-family:var(--ar);font-size:14px;font-weight:500;line-height:1.9;color:var(--ink);}
+.p-shot:hover{background:var(--navy-deep);}
 .ro-rows{margin-top:12px;display:flex;flex-direction:column;gap:10px;}
 .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
 .tiles div{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 4px 9px;text-align:center;}

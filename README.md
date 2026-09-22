@@ -33,6 +33,7 @@ Bilingual **Urdu / roman-English** node cards · collapsible branches · live se
 | 🌿 **Fold** | Collapse / expand any branch via the round button under a card |
 | 🔎 **Search** | Find anyone by Urdu or roman name — matches highlight, first result centers |
 | 💾 **Export** | Save the full tree as **PNG** or **PDF**, or **print** it |
+| 📷 **Screenshot** | Tap a person, then **Screenshot this line** saves just their highlighted line — elders up to the top and family below — as PNG |
 
 ---
 
