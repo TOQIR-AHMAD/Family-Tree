@@ -70,7 +70,15 @@ let forest = [
             N("مغربی", "Magarbi", []),
           ]),
           N("سمیر خان", "Sumair Khan", [
-            N("اقبال خان", "Iqbal Khan", []),
+            N("اقبال خان", "Iqbal Khan", [
+              N("حبیب", "Habib", []),
+              N("حنیف", "Hanif", []),
+              N("عابد", "Abid", [
+                N("محمد عبید", "M Ubaid", []),
+                N("محمد جواد", "M Jawad", []),
+              ]),
+              N("عبدل", "Abdul", []),
+            ]),
             N("اسحاق", "Ishaq", [
               N("مقصود", "Maqsood", []),
               N("جمشید", "Jamsheed", []),
