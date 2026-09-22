@@ -255,9 +255,13 @@ const STACK_GAP=14, STACK_IN=16;
 // cards (up to GEN_MAX); the most crowded generation gets GEN_MIN. Never larger
 // than the generation above, so elders always read biggest.
 const GEN_MAX=2.4, GEN_MIN=0.45, GEN_POW=0.5;
+// each son at a tree's first fork heads a branch with its own colour; the
+// elders above that fork share the trunk colour
+const BRANCH_COLORS=['#c0573e','#3d55a3','#8a4d9c','#4f8a3a','#b0456e','#2f7fae','#6b7a2a','#8c5a2b'];
+const TRUNK='#a67c2e';
 let rtl=true;
 let collapsed=new Set();
-let pos={}, parentOf={}, depthOf={}, descCount={};
+let pos={}, parentOf={}, depthOf={}, descCount={}, branchOf={}, branchHeads=[];
 let dims={w:0,h:0};
 let view={tx:0,ty:0,scale:1};
 let selectedId=null;
@@ -392,6 +396,23 @@ function countDescendants(){
   function w(n){ let c=0; (n.children||[]).forEach(k=>{c+=1+w(k);}); descCount[n.id]=c; return c; }
   forest.forEach(w);
 }
+function computeBranches(){
+  branchOf={}; branchHeads=[];
+  function mark(n,b){ branchOf[n.id]=b; (n.children||[]).forEach(c=>mark(c,b)); }
+  forest.forEach(t=>{
+    let n=t; branchOf[n.id]=-1;
+    while((n.children||[]).length===1){ n=n.children[0]; branchOf[n.id]=-1; }
+    (n.children||[]).forEach(c=>{ mark(c,branchHeads.length); branchHeads.push(c.id); });
+  });
+}
+function branchColor(id){ const b=branchOf[id]; return b>=0?BRANCH_COLORS[b%BRANCH_COLORS.length]:TRUNK; }
+/* hex colour mixed with white; t = share of the colour that remains */
+function tint(hex,t){
+  const v=parseInt(hex.slice(1),16), m=x=>Math.round(255-(255-x)*t).toString(16).padStart(2,'0');
+  return '#'+m(v>>16)+m(v>>8&255)+m(v&255);
+}
+/* CSS variables a card (or anything styled like one) takes its colours from */
+function colorVars(id){ const c=branchColor(id); return `--bc:${c};--bl:${tint(c,.38)};--bs:${tint(c,.07)}`; }
 function totalPeople(){ let n=0; function w(x){n++;(x.children||[]).forEach(w);} forest.forEach(w); return n; }
 function maxGen(){ return Math.max(0,...Object.values(depthOf))+1; }
 
@@ -430,7 +451,7 @@ function render(){
   const L=computeLayout(collapsed);
   pos=L.pos; parentOf=L.parentOf; depthOf=L.depthOf; dims={w:L.w,h:L.h};
   const edgeD=L.edges;
-  countDescendants();
+  countDescendants(); computeBranches();
   world.style.width=dims.w+'px'; world.style.height=dims.h+'px';
   svg.setAttribute('width',dims.w); svg.setAttribute('height',dims.h);
 
@@ -458,7 +479,7 @@ function render(){
       if(onLine) cls+=' hot'; else if(below) cls+=' kin'; else if(lineage) cls+=' dim';
       if(matches) cls+=' dim';
       // lines into the big upper generations are drawn thicker
-      let st=`--w:${Math.max(1,pos[c.id].s).toFixed(2)}`;
+      let st=`--w:${Math.max(1,pos[c.id].s).toFixed(2)};--bc:${branchColor(c.id)}`;
       if(onLine||below){
         st+=`;--i:${depthOf[node.id]}`;
         extra=` pathLength="1"`;
@@ -489,12 +510,13 @@ function render(){
     if(matches){ if(matches.has(node.id)) cls+=' match'; else cls+=' dim'; }
     if(p.side) cls+=' stk stk-'+p.side;
     el.className=cls;
+    el.style.cssText=colorVars(node.id);
     el.style.left=p.x+'px'; el.style.top=p.y+'px'; el.dataset.id=node.id;
     el.style.transform=`scale(${p.s})`;
     if(lineage && (lineage.has(node.id)||kin.has(node.id))) el.style.setProperty('--i',depth);
     let inner=
-      `<div class="meta"><span>gen ${depth}</span>`+
-      `<span class="tag">${isTop?'TOP':(hasKids?'':'leaf')}</span></div>`+
+      `<div class="meta"><span class="gen">Gen ${depth}</span>`+
+      (isTop?`<span class="tag">TOP</span>`:'')+`</div>`+
       `<div class="name">${escapeHtml(node.ur)||'—'}</div>`+
       `<div class="roman">${escapeHtml(node.en)||''}</div>`;
     if(hasKids){
@@ -509,7 +531,8 @@ function render(){
   }
   forest.forEach(walkN);
 
-  document.getElementById('stats').textContent = totalPeople()+' people · '+maxGen()+' generations';
+  document.getElementById('stats').innerHTML=`<b>${totalPeople()}</b> people · <b>${maxGen()}</b> generations`;
+  document.querySelectorAll('#legend button').forEach(b=>b.classList.toggle('on',+b.dataset.id===selectedId));
   applyView();
 }
 function escapeHtml(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
@@ -614,10 +637,14 @@ function fitToScreen(){
   view.scale=s; view.tx=(rect.width-dims.w*s)/2; view.ty=ty;
   applyView();
 }
+/* true if any card would sit under the zoom buttons or the branch legend */
 function dockCovers(s,tx,ty){
-  const st=stage.getBoundingClientRect(), d=document.getElementById('zoomdock').getBoundingClientRect(), m=6;
-  const x0=d.left-st.left-m, x1=d.right-st.left+m, y0=d.top-st.top-m, y1=d.bottom-st.top+m;
-  return Object.values(pos).some(p=>p.x*s+tx<x1 && (p.x+p.w)*s+tx>x0 && p.y*s+ty<y1 && (p.y+p.h)*s+ty>y0);
+  const st=stage.getBoundingClientRect(), m=6;
+  return ['zoomdock','legend'].some(k=>{
+    const d=document.getElementById(k).getBoundingClientRect(); if(!d.width) return false;
+    const x0=d.left-st.left-m, x1=d.right-st.left+m, y0=d.top-st.top-m, y1=d.bottom-st.top+m;
+    return Object.values(pos).some(p=>p.x*s+tx<x1 && (p.x+p.w)*s+tx>x0 && p.y*s+ty<y1 && (p.y+p.h)*s+ty>y0);
+  });
 }
 function centerOn(id){
   const p=pos[id]; if(!p) return;
@@ -649,14 +676,21 @@ function findNode(id){ let f=null; function w(n){ if(n.id===id){f=n;return;}(n.c
 
 function selectNode(id){
   selectedId=id; const n=findNode(id); if(!n) return;
-  document.getElementById('roName').textContent=n.ur||'—';
-  document.getElementById('roRoman').textContent=n.en||'';
   const kids=(n.children||[]).length, top=parentOf[id]===null;
   const pid=parentOf[id], par=pid!=null?findNode(pid):null;
-  let rows='';
-  rows+=`<div class="ro-row"><span>Generation</span><b>${top?'top branch':depthOf[id]}</b></div>`;
+  const b=branchOf[id], head=b>=0?findNode(branchHeads[b]):null;
+  document.getElementById('roHero').style.cssText=colorVars(id);
+  document.getElementById('roAvatar').textContent=[...(n.ur||'').trim()][0]||'—';
+  document.getElementById('roName').textContent=n.ur||'—';
+  document.getElementById('roRoman').textContent=n.en||'';
+  document.getElementById('roBranch').innerHTML=head
+    ? `<i></i><b class="ur">${escapeHtml(head.ur)}</b>${escapeHtml(head.en)} branch`
+    : `<i></i>${top?'Top of the tree':'Elder line'}`;
+  let rows=`<div class="tiles">`+
+    `<div><b>${top?'Top':depthOf[id]}</b><span>Generation</span></div>`+
+    `<div><b>${kids}</b><span>Children</span></div>`+
+    `<div><b>${descCount[id]||0}</b><span>Descendants</span></div></div>`;
   if(par) rows+=`<div class="ro-row"><span>Father</span><b class="ur">${escapeHtml(par.ur)}</b></div>`;
-  rows+=`<div class="ro-row"><span>Children</span><b>${kids}</b></div>`;
   // ancestors listed top → down, ending with this person; each entry is tappable
   const chain=[...ancestorChain(id)].reverse().map(x=>findNode(x));
   if(chain.length>1){
@@ -674,6 +708,29 @@ document.getElementById('roRows').addEventListener('click',e=>{
 });
 function deselect(){ selectedId=null; panel.classList.remove('open'); render(); }
 document.getElementById('panelClose').onclick=deselect;
+/* unfold the person and everyone above them so they are on screen */
+function reveal(id){
+  const full=computeLayout(new Set()).parentOf;
+  for(let cur=id;cur!=null;cur=full[cur]) collapsed.delete(cur);
+}
+
+/* branch legend: one chip per branch; tapping one highlights that whole branch */
+const legend=document.getElementById('legend');
+function renderLegend(){
+  legend.hidden=!branchHeads.length;
+  legend.innerHTML=`<span class="ttl">Branches</span><div class="chips" dir="${rtl?'rtl':'ltr'}">`+
+    branchHeads.map(id=>{
+      const n=findNode(id), people=(descCount[id]||0)+1;
+      return `<button data-id="${id}" style="${colorVars(id)}" title="${escapeHtml(n.en)} · ${people} people">`+
+        `<i></i><span class="ur">${escapeHtml(n.ur)}</span><span class="n">${people}</span></button>`;
+    }).join('')+`</div>`;
+}
+legend.addEventListener('click',e=>{
+  const b=e.target.closest('button[data-id]'); if(!b) return;
+  const id=+b.dataset.id;
+  if(selectedId===id){ deselect(); return; }
+  reveal(id); render(); selectNode(id); centerOn(id);
+});
 
 /* ============================================================
    SEARCH
@@ -689,10 +746,7 @@ searchEl.addEventListener('input',()=>{
     searchCount.textContent=ids.length?(ids.length+' found'):'none';
     if(ids.length){
       // make sure first match is visible: expand its ancestors
-      let cur=ids[0], chain=[];
-      const full=computeLayout(new Set());
-      while(cur!=null){ chain.push(cur); cur=full.parentOf[cur]; }
-      chain.forEach(id=>collapsed.delete(id));
+      reveal(ids[0]);
       render(); centerOn(ids[0]);
       return;
     }
@@ -723,19 +777,31 @@ async function renderFullCanvas(){
   const W=L.w, H=L.h, dpr=2;
   const cv=document.createElement('canvas'); cv.width=W*dpr; cv.height=H*dpr;
   const ctx=cv.getContext('2d'); ctx.scale(dpr,dpr);
-  ctx.fillStyle='#f3ecdb'; ctx.fillRect(0,0,W,H);
-  ctx.strokeStyle='#22357a';
-  Object.keys(L.edges).forEach(id=>{ ctx.lineWidth=1.7*Math.max(1,P[id].s); ctx.stroke(new Path2D(L.edges[id])); });
+  computeBranches();
+  ctx.fillStyle='#f5f0e6'; ctx.fillRect(0,0,W,H);
+  Object.keys(L.edges).forEach(id=>{ ctx.strokeStyle=branchColor(id); ctx.lineWidth=1.8*Math.max(1,P[id].s); ctx.stroke(new Path2D(L.edges[id])); });
   function rr(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
   // each card is drawn at full size, then scaled to its generation's size
-  function walkN(node){ const p=P[node.id]; const isTop=par[node.id]===null; const isLeaf=!(node.children&&node.children.length);
+  function walkN(node){ const p=P[node.id]; const isTop=par[node.id]===null; const c=branchColor(node.id);
     ctx.save(); ctx.translate(p.x,p.y); ctx.scale(p.s,p.s);
-    rr(0,0,NODE_W,NODE_H,15); ctx.fillStyle=isTop?'#f6e7cd':'#fbf8ef'; ctx.fill(); ctx.lineWidth=1.8; ctx.strokeStyle=isTop?'#b06a1d':'#22357a'; ctx.stroke();
-    ctx.fillStyle='#7c7560'; ctx.font='9px "IBM Plex Mono",monospace'; ctx.textAlign='left'; ctx.fillText('gen '+dep[node.id],12,16);
-    ctx.textAlign='right'; ctx.fillText(isTop?'TOP':(isLeaf?'leaf':''),NODE_W-12,16);
-    ctx.fillStyle='#16224f'; ctx.direction='rtl'; ctx.textAlign='center'; ctx.font='500 21px "Noto Nastaliq Urdu","Noto Naskh Arabic",serif';
-    ctx.fillText(node.ur||'—',NODE_W/2,54,NODE_W-20);
-    ctx.direction='ltr'; ctx.fillStyle='#7c7560'; ctx.font='italic 11px Inter,sans-serif'; ctx.fillText(node.en||'',NODE_W/2,78,NODE_W-16);
+    // card: soft shadow, branch-tinted wash, coloured top bar, tinted border
+    rr(0,0,NODE_W,NODE_H,15);
+    const g=ctx.createLinearGradient(0,0,0,NODE_H);
+    if(isTop){ g.addColorStop(0,'#fffaf0'); g.addColorStop(1,'#f8ecd0'); } else { g.addColorStop(0,tint(c,.07)); g.addColorStop(.62,'#fff'); }
+    ctx.save(); ctx.shadowColor='rgba(28,37,65,.16)'; ctx.shadowBlur=14; ctx.shadowOffsetY=5; ctx.fillStyle=g; ctx.fill(); ctx.restore();
+    // top bar that follows the rounded corners (like the cards' inset shadow):
+    // fill the card in colour, then cover all but its top with the card moved down
+    ctx.save(); ctx.clip(); ctx.fillStyle=c; ctx.fillRect(0,0,NODE_W,NODE_H);
+    ctx.translate(0,5); rr(0,0,NODE_W,NODE_H,15); ctx.fillStyle=g; ctx.fill(); ctx.restore();
+    rr(0,0,NODE_W,NODE_H,15); ctx.lineWidth=1.5; ctx.strokeStyle=isTop?'#ddb868':tint(c,.38); ctx.stroke();
+    ctx.fillStyle=c; ctx.font='700 8.5px Inter,sans-serif'; ctx.textAlign='left'; ctx.fillText('GEN '+dep[node.id],12,21);
+    if(isTop){
+      rr(NODE_W-45,11,33,14,6); ctx.fillStyle='#c8901c'; ctx.fill();
+      ctx.fillStyle='#fff'; ctx.font='700 7.5px Inter,sans-serif'; ctx.textAlign='center'; ctx.fillText('TOP',NODE_W-28.5,21);
+    }
+    ctx.fillStyle='#1c2541'; ctx.direction='rtl'; ctx.textAlign='center'; ctx.font='500 21px "Noto Nastaliq Urdu","Noto Naskh Arabic",serif';
+    ctx.fillText(node.ur||'—',NODE_W/2,56,NODE_W-20);
+    ctx.direction='ltr'; ctx.fillStyle='#8b826f'; ctx.font='500 10.5px Inter,sans-serif'; ctx.fillText(node.en||'',NODE_W/2,80,NODE_W-16);
     ctx.restore();
     (node.children||[]).forEach(walkN);
   }
@@ -788,5 +854,5 @@ document.getElementById('mPdfPortrait').onclick=()=>{ closeMenu(); exportPdf('po
 /* ============================================================
    BOOT
    ============================================================ */
-function boot(){ render(); fitToScreen(); }
+function boot(){ render(); renderLegend(); fitToScreen(); }
 if(document.fonts&&document.fonts.ready){ document.fonts.ready.then(boot); setTimeout(boot,400); } else boot();

@@ -29,7 +29,8 @@ Bilingual **Urdu / roman-English** node cards · collapsible branches · live se
 |---|---|
 | 🖱️ **Navigate** | Pan (drag), zoom (wheel / pinch / zoom dock), and **Fit** to screen |
 | 👤 **Inspect** | Tap a person to see their details and their line back to the top |
-| 🌿 **Fold** | Collapse / expand any branch via the amber circle under a card |
+| 🎨 **Branches** | Each son at the first fork heads a colour-coded branch; tap one in the legend to highlight it |
+| 🌿 **Fold** | Collapse / expand any branch via the round button under a card |
 | 🔎 **Search** | Find anyone by Urdu or roman name — matches highlight, first result centers |
 | 💾 **Export** | Save the full tree as **PNG** or **PDF**, or **print** it |
 
@@ -50,9 +51,10 @@ Bilingual **Urdu / roman-English** node cards · collapsible branches · live se
 
 <br/>
 
-The interface is styled to evoke a **hand-ruled ledger**: aged-paper background, a red margin
-rule, and card nodes joined by elbow connectors. Typography pairs *Noto Nastaliq Urdu* for the
-names with *Inter* and *IBM Plex Mono* for the chrome.
+A warm **ivory, navy and gold** heritage palette. Every branch of the family carries its own
+colour through its cards and connecting lines, so the houses stand apart even when the whole
+tree is zoomed out. Controls float on frosted panels over the canvas. Typography pairs
+*Noto Nastaliq Urdu* for the names with *Inter* for the interface.
 
 </details>
 
