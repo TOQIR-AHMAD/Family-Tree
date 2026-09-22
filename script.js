@@ -80,11 +80,26 @@ let forest = [
               N("عبدل", "Abdul", []),
             ]),
             N("اسحاق", "Ishaq", [
-              N("مقصود", "Maqsood", []),
-              N("جمشید", "Jamsheed", []),
+              N("مقصود", "Maqsood", [
+                N("طلحہ", "Talha", []),
+                N("طہٰ", "Taha", []),
+              ]),
+              N("جمشید", "Jamsheed", [
+                N("حذیفہ", "Huzaifa", []),
+                N("فہد", "Fahad", []),
+                N("سعد", "Saad", []),
+                N("احد", "Ahad", []),
+                N("حارث", "Haris", []),
+              ]),
               N("تصور", "Tasawar", []),
-              N("ریاست", "Riasat", []),
-              N("شاکر", "Shakir", []),
+              N("ریاست", "Riasat", [
+                N("حسن", "Hassan", []),
+                N("حسنین", "Hassnain", []),
+              ]),
+              N("شاکر", "Shakir", [
+                N("حمدان", "Hamdan", []),
+                N("شایان", "Shaiyan", []),
+              ]),
               N("شہروز", "Shehroz", []),
             ]),
             N("الیاس", "Ilyas", [
@@ -94,12 +109,23 @@ let forest = [
               N("ذیشان", "Zeeshan", []),
             ]),
             N("شیر خان", "Shair Khan", [
-              N("ابراہیم", "Ibrahim", []),
+              N("ابراہیم", "Ibrahim", [
+                N("زین", "Zain", []),
+                N("ابوبکر", "Abu Bakar", []),
+                N("حسنین", "Hassnain", []),
+              ]),
               N("طارق", "Tariq", []),
               N("زبیر", "Zubair", []),
             ]),
             N("عبداللہ", "Abdullah", [
-              N("ظہیر", "Zaheer", []),
+              N("ظہیر", "Zaheer", [
+                N("ارسلان", "Arslan", []),
+                N("ایان", "Ayyan", []),
+                N("علیان", "Aliyan", []),
+                N("ریان", "Riyan", []),
+                N("مستقیم", "Mustaqim", []),
+                N("اذان", "Azan", []),
+              ]),
               N("کامران", "Kamran", []),
             ]),
           ]),
@@ -113,7 +139,9 @@ let forest = [
                   N("طلحہ", "Talha", []),
                   N("احمد", "Ahmad", []),
                 ]),
-                N("شہزاد احمد", "Shazad Ahmad", []),
+                N("شہزاد احمد", "Shazad Ahmad", [
+                  N("آفاق", "Afaq", []),
+                ]),
                 N("ایاز احمد", "Ayaz Ahmad", [
                   N("آکاش", "Akash", []),
                   N("ابوبکر", "Abu Baker", []),
@@ -627,14 +655,11 @@ document.getElementById('fit').onclick=()=>fitToScreen();
 function fitToScreen(){
   const rect=stage.getBoundingClientRect();
   let s=clamp(Math.min(rect.width/dims.w, rect.height/dims.h, 1.4)*0.96);
-  let ty=(rect.height-dims.h*s)/2;
-  // the tree reaches the corners, so keep cards out from under the zoom buttons:
-  // first lift it to the top of the screen, then shrink it a little if still needed
-  for(let i=0;i<10 && dockCovers(s,(rect.width-dims.w*s)/2,ty);i++){
-    if(i) s*=0.97;
-    ty=Math.min((rect.height-dims.h*s)/2,8-PAD*s);
-  }
-  view.scale=s; view.tx=(rect.width-dims.w*s)/2; view.ty=ty;
+  // pin the top of the tree just under the header instead of centring it, then
+  // shrink it a little if cards would still sit under the zoom buttons or legend
+  const ty=()=>20-PAD*s;
+  for(let i=0;i<10 && dockCovers(s,(rect.width-dims.w*s)/2,ty());i++) s*=0.97;
+  view.scale=s; view.tx=(rect.width-dims.w*s)/2; view.ty=ty();
   applyView();
 }
 /* true if any card would sit under the zoom buttons or the branch legend */
