@@ -279,7 +279,7 @@ let forest = [
             N("سردار خان", "Sardar Khan", [
               N("سعید", "Saeed", []),
               N("وحید", "Waheed", []),
-              N("نصر", "Nasar", []),
+              N("ناصر", "Nasar", []),
               N("امجد", "Amjad", []),
             ]),
             N("اصحاب خان", "Ashab Khan", [
