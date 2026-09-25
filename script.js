@@ -216,7 +216,13 @@ let forest = [
           ]),
           N("لیلا", "Leela", [
             N("سیپی چھلا", "Seepi Chhalla", [
-              N("جھپو", "Jhapu", []),
+              N("جھپو", "Jhapu", [
+                N("یعقوب", "Yaqoob", [
+                  N("ریحان", "Rehan", [
+                    N("تیمور", "Tahmoor", []),
+                  ]),
+                ]),
+              ]),
             ]),
             N("عیب خان", "Aiab Khan", []),
           ]),
