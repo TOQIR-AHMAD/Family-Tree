@@ -215,64 +215,64 @@ let forest = [
             ]),
           ]),
           N("لیلا", "Leela", [
-            N("جھپو", "Jhapu", []),
+            N("سیپی چھلا", "Seepi Chhalla", [
+              N("جھپو", "Jhapu", []),
+            ]),
             N("عیب خان", "Aiab Khan", []),
           ]),
           N("نذیرا", "Nazeera", [
-            N("سیپی چھلا", "Seepi Chhalla", [
-              N("مجید خان", "Majeed Khan", [
-                N("نور محمد", "Noor Muhammad", [
-                  N("عزیز", "Aziz", [
-                    N("زاہد", "Zahid", [
-                      N("محمد مومن", "Muhammad Momin", []),
-                      N("محمد موبز", "Muhammad Mobiz", []),
-                    ]),
-                    N("جمشید", "Jamsheed", [
-                      N("طلال", "Talal", []),
-                      N("بلال", "Bilal", []),
-                    ]),
-                    N("شاہد", "Shahid", [
-                      N("شعبان", "Shaban", []),
-                      N("احمر", "Ahmar", []),
-                    ]),
+            N("مجید خان", "Majeed Khan", [
+              N("نور محمد", "Noor Muhammad", [
+                N("عزیز", "Aziz", [
+                  N("زاہد", "Zahid", [
+                    N("محمد مومن", "Muhammad Momin", []),
+                    N("محمد موبز", "Muhammad Mobiz", []),
                   ]),
-                  N("ارشد", "Arshad", [
-                    N("عدنان", "Adnan", []),
-                    N("ذیشان", "Zeeshan", []),
-                    N("سفیان", "Sufian", []),
+                  N("جمشید", "Jamsheed", [
+                    N("طلال", "Talal", []),
+                    N("بلال", "Bilal", []),
                   ]),
-                  N("عثمان", "Usman", [
-                    N("حامد", "Hamid", []),
-                    N("عاطف", "Atif", []),
-                  ]),
-                  N("ذاکر", "Zakir", [
-                    N("طیب", "Taiab", []),
-                    N("احمد", "Ahmad", []),
-                  ]),
-                  N("صابر", "Sabir", [
-                    N("فائز", "Faiez", []),
-                    N("ربیع", "Rabi", []),
-                    N("حسن", "Hassan", []),
+                  N("شاہد", "Shahid", [
+                    N("شعبان", "Shaban", []),
+                    N("احمر", "Ahmar", []),
                   ]),
                 ]),
-                N("امرت خان", "Imrat Khan", [
-                  N("نوید", "Naveed", [
-                    N("ارحم", "Arham", []),
-                  ]),
-                  N("ساجد", "Sajid", [
-                    N("فراز", "Faraz", []),
-                    N("حسیب", "Hasib", []),
-                    N("ہادی", "Hadi", []),
-                  ]),
-                  N("واجد", "Wajid", [
-                    N("عمار", "Amar", []),
-                    N("ابوبکر", "Abubakar", []),
-                  ]),
-                  N("عامر", "Amir", []),
-                  N("نادر", "Nadir", [
-                    N("ارتضیٰ", "Irtaza", []),
-                    N("حمزہ", "Hamza", []),
-                  ]),
+                N("ارشد", "Arshad", [
+                  N("عدنان", "Adnan", []),
+                  N("ذیشان", "Zeeshan", []),
+                  N("سفیان", "Sufian", []),
+                ]),
+                N("عثمان", "Usman", [
+                  N("حامد", "Hamid", []),
+                  N("عاطف", "Atif", []),
+                ]),
+                N("ذاکر", "Zakir", [
+                  N("طیب", "Taiab", []),
+                  N("احمد", "Ahmad", []),
+                ]),
+                N("صابر", "Sabir", [
+                  N("فائز", "Faiez", []),
+                  N("ربیع", "Rabi", []),
+                  N("حسن", "Hassan", []),
+                ]),
+              ]),
+              N("امرت خان", "Imrat Khan", [
+                N("نوید", "Naveed", [
+                  N("ارحم", "Arham", []),
+                ]),
+                N("ساجد", "Sajid", [
+                  N("فراز", "Faraz", []),
+                  N("حسیب", "Hasib", []),
+                  N("ہادی", "Hadi", []),
+                ]),
+                N("واجد", "Wajid", [
+                  N("عمار", "Amar", []),
+                  N("ابوبکر", "Abubakar", []),
+                ]),
+                N("عامر", "Amir", []),
+                N("نادر", "Nadir", [
+                  N("ارتضیٰ", "Irtaza", []),
+                  N("حمزہ", "Hamza", []),
                 ]),
               ]),
             ]),
