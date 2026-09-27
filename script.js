@@ -523,6 +523,11 @@ function descendantIds(id){
   const n=findNode(id); if(n && !collapsed.has(id)) w(n);
   return set;
 }
+/* the person's brothers (and any other children of their father) */
+function siblingIds(id){
+  const par=parentOf[id]!=null?findNode(parentOf[id]):null;
+  return (par?par.children:[]).map(c=>c.id).filter(x=>x!==id);
+}
 function matchIds(){
   const t=searchTerm.trim().toLowerCase();
   const set=new Set();
@@ -544,7 +549,8 @@ function render(){
   svg.setAttribute('width',dims.w); svg.setAttribute('height',dims.h);
 
   const lineage = selectedId!=null ? ancestorChain(selectedId) : null;
-  const kin = selectedId!=null ? descendantIds(selectedId) : null;
+  // teal: the selected person's brothers and their family below
+  const kin = selectedId!=null ? new Set([...siblingIds(selectedId),...descendantIds(selectedId)]) : null;
   const matches = searchTerm.trim() ? matchIds() : null;
 
   // animation pacing: one "step" per generation, from the top down through
@@ -556,7 +562,7 @@ function render(){
 
   // edges (animated ones get pathLength=1 so they can be "drawn" in via dashoffset;
   // a flow overlay on top shows the direction parent → child)
-  let paths='', flows='';
+  let paths='', hot='', flows='';
   function walkE(node){
     if(collapsed.has(node.id)) return;
     (node.children||[]).forEach(c=>{
@@ -573,12 +579,14 @@ function render(){
         extra=` pathLength="1"`;
         if(!matches) flows+=`<path class="flow" d="${d}" style="${st}"/>`;
       }
-      paths+=`<path class="${cls}"${extra} d="${d}" style="${st}"/>`;
+      // the gold line goes on top: a stacked brother's line runs along part of it
+      const path=`<path class="${cls}"${extra} d="${d}" style="${st}"/>`;
+      if(onLine) hot+=path; else paths+=path;
       walkE(c);
     });
   }
   forest.forEach(walkE);
-  svg.innerHTML=paths+flows;
+  svg.innerHTML=paths+hot+flows;
 
   // nodes
   [...world.querySelectorAll('.node')].forEach(n=>n.remove());
@@ -860,7 +868,9 @@ function drawTree(L,roots,folded,k,hl){
   const ctx=cv.getContext('2d'); ctx.scale(k,k);
   computeBranches();
   ctx.fillStyle='#f5f0e6'; ctx.fillRect(0,0,L.w,L.h);
-  Object.keys(L.edges).forEach(id=>{
+  // the gold line goes on top: a stacked brother's line runs along part of it
+  const ids=Object.keys(L.edges); if(hl) ids.sort((a,b)=>hl.line.has(+a)-hl.line.has(+b));
+  ids.forEach(id=>{
     const on=hl&&hl.line.has(+id);
     ctx.strokeStyle=on?GOLD:hl?TEAL:branchColor(id); ctx.lineWidth=(on?3:hl?2.6:1.8)*Math.max(1,P[id].s);
     ctx.stroke(new Path2D(L.edges[id]));
@@ -919,14 +929,15 @@ document.getElementById('mPng').onclick=async()=>{
 /* PDF — hand-built single-page PDF embedding a canvas image (no libraries).
    The page is sized to the image's OWN aspect ratio so the drawing fills the page
    edge-to-edge (no wasted whitespace, nodes stay large & crisp).
-   orientation: 'landscape' (horizontal, natural) or 'portrait' (vertical, rotated 90°). */
+   orientation: 'landscape' (horizontal, natural) or 'portrait' (vertical, rotated 90°);
+   margin: white border in points (0 = the page is exactly the image). */
 function bytesFromBinaryString(str){ const a=new Uint8Array(str.length); for(let i=0;i<str.length;i++) a[i]=str.charCodeAt(i)&0xff; return a; }
-function canvasToPdf(cv,orientation){
+function canvasToPdf(cv,orientation,margin=18){
   const jpeg=cv.toDataURL('image/jpeg',0.92);
   const bin=atob(jpeg.split(',')[1]);            // raw JPEG bytes as a binary string
   // Page proportional to the image, with a cap on the long edge (keeps file/page sane
   // while the full-resolution image gives high effective DPI).
-  const margin=18, maxLong=4000;
+  const maxLong=4000;
   const s=Math.min(1, maxLong/Math.max(cv.width,cv.height));
   const dw=cv.width*s, dh=cv.height*s;           // drawn image size in points
   const pw=dw+2*margin, ph=dh+2*margin;          // media box = content + thin margin
@@ -957,19 +968,23 @@ document.getElementById('mPdfPortrait').onclick=()=>{ closeMenu(); exportPdf('po
 /* ============================================================
    SCREENSHOT / PDF OF A HIGHLIGHTED LINE
    the selected person's highlight on its own: the line from the top down to
-   them (gold) and their family below as it is unfolded now (teal); everyone
-   else is left out
+   them (gold), their brothers and their family below as it is unfolded now
+   (teal); everyone else is left out
    ============================================================ */
 async function lineCanvas(){
   const id=selectedId, n=findNode(id); if(!n) return null;
   // top → selected, from the full tree so it works even when an elder is folded
   const up=computeLayout(new Set()).parentOf, chain=[];
   for(let cur=id;cur!=null;cur=up[cur]) chain.unshift(findNode(cur));
-  // elders carry only the next person down the line; the selected keeps their family
+  // elders carry only the next person down the line, except the father, who
+  // keeps all his sons; the selected keeps their family
+  const dad=chain.length-2;
   let root=n;
-  for(let i=chain.length-2;i>=0;i--) root={...chain[i],children:[root]};
+  for(let i=dad;i>=0;i--) root={...chain[i],children:i===dad?chain[i].children:[root]};
   const line=new Set(chain.map(x=>x.id));
-  const folded=new Set([...collapsed].filter(x=>x===id||!line.has(x)));
+  // brothers are drawn folded: their families stay out, a "+N" pill shows they have one
+  const brothers=dad>=0?chain[dad].children.map(c=>c.id).filter(x=>x!==id):[];
+  const folded=new Set([...collapsed].filter(x=>x===id||!line.has(x)).concat(brothers));
   await fontsReady();
   const L=computeLayout(folded,[root]);
   // smallest card at least twice its full size, within what one canvas allows
@@ -984,7 +999,8 @@ document.getElementById('lineShot').onclick=async()=>{
 };
 document.getElementById('linePdf').onclick=async()=>{
   const r=await lineCanvas(); if(!r) return;
-  download(canvasToPdf(r.cv,'landscape'),`shajra-${r.name}.pdf`);
+  // no border, so the PDF page is the screenshot itself
+  download(canvasToPdf(r.cv,'landscape',0),`shajra-${r.name}.pdf`);
 };
 
 /* ============================================================
