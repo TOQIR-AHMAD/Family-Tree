@@ -905,13 +905,12 @@ document.getElementById('mPng').onclick=async()=>{
   cv.toBlob(b=>download(b,'shajra-tree.png'),'image/png');
 };
 
-/* PDF — hand-built single-page PDF embedding the full-tree image (no libraries).
-   The page is sized to the tree's OWN aspect ratio so the drawing fills the page
+/* PDF — hand-built single-page PDF embedding a canvas image (no libraries).
+   The page is sized to the image's OWN aspect ratio so the drawing fills the page
    edge-to-edge (no wasted whitespace, nodes stay large & crisp).
    orientation: 'landscape' (horizontal, natural) or 'portrait' (vertical, rotated 90°). */
 function bytesFromBinaryString(str){ const a=new Uint8Array(str.length); for(let i=0;i<str.length;i++) a[i]=str.charCodeAt(i)&0xff; return a; }
-async function exportPdf(orientation){
-  const {cv}=await renderFullCanvas();
+function canvasToPdf(cv,orientation){
   const jpeg=cv.toDataURL('image/jpeg',0.92);
   const bin=atob(jpeg.split(',')[1]);            // raw JPEG bytes as a binary string
   // Page proportional to the image, with a cap on the long edge (keeps file/page sane
@@ -935,19 +934,23 @@ async function exportPdf(orientation){
   let xref='xref\n0 6\n0000000000 65535 f \n';
   for(let i=1;i<=5;i++) xref+=String(off[i]).padStart(10,'0')+' 00000 n \n';
   pdf+=xref+`trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n${xrefOff}\n%%EOF`;
-  download(new Blob([bytesFromBinaryString(pdf)],{type:'application/pdf'}),`shajra-tree-${orientation}.pdf`);
+  return new Blob([bytesFromBinaryString(pdf)],{type:'application/pdf'});
+}
+async function exportPdf(orientation){
+  const {cv}=await renderFullCanvas();
+  download(canvasToPdf(cv,orientation),`shajra-tree-${orientation}.pdf`);
 }
 document.getElementById('mPdfLandscape').onclick=()=>{ closeMenu(); exportPdf('landscape'); };
 document.getElementById('mPdfPortrait').onclick=()=>{ closeMenu(); exportPdf('portrait'); };
 
 /* ============================================================
-   SCREENSHOT OF A HIGHLIGHTED LINE
+   SCREENSHOT / PDF OF A HIGHLIGHTED LINE
    the selected person's highlight on its own: the line from the top down to
    them (gold) and their family below as it is unfolded now (teal); everyone
    else is left out
    ============================================================ */
-function saveLineShot(){
-  const id=selectedId, n=findNode(id); if(!n) return;
+async function lineCanvas(){
+  const id=selectedId, n=findNode(id); if(!n) return null;
   // top → selected, from the full tree so it works even when an elder is folded
   const up=computeLayout(new Set()).parentOf, chain=[];
   for(let cur=id;cur!=null;cur=up[cur]) chain.unshift(findNode(cur));
@@ -956,16 +959,22 @@ function saveLineShot(){
   for(let i=chain.length-2;i>=0;i--) root={...chain[i],children:[root]};
   const line=new Set(chain.map(x=>x.id));
   const folded=new Set([...collapsed].filter(x=>x===id||!line.has(x)));
-  fontsReady().then(()=>{
-    const L=computeLayout(folded,[root]);
-    // smallest card at least twice its full size, within what one canvas allows
-    const minS=Math.min(...Object.values(L.pos).map(p=>p.s));
-    const k=Math.min(2/minS,8192/Math.max(L.w,L.h),Math.sqrt(16e6/(L.w*L.h)));
-    const name=(n.en||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||id;
-    drawTree(L,[root],folded,k,{sel:id,line}).toBlob(b=>download(b,`shajra-${name}.png`),'image/png');
-  });
+  await fontsReady();
+  const L=computeLayout(folded,[root]);
+  // smallest card at least twice its full size, within what one canvas allows
+  const minS=Math.min(...Object.values(L.pos).map(p=>p.s));
+  const k=Math.min(2/minS,8192/Math.max(L.w,L.h),Math.sqrt(16e6/(L.w*L.h)));
+  const name=(n.en||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||id;
+  return {cv:drawTree(L,[root],folded,k,{sel:id,line}),name};
 }
-document.getElementById('lineShot').onclick=saveLineShot;
+document.getElementById('lineShot').onclick=async()=>{
+  const r=await lineCanvas(); if(!r) return;
+  r.cv.toBlob(b=>download(b,`shajra-${r.name}.png`),'image/png');
+};
+document.getElementById('linePdf').onclick=async()=>{
+  const r=await lineCanvas(); if(!r) return;
+  download(canvasToPdf(r.cv,'landscape'),`shajra-${r.name}.pdf`);
+};
 
 /* ============================================================
    BOOT

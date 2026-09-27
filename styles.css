@@ -206,8 +206,9 @@ path.flow{
 #panel .close .i{width:14px;height:14px;stroke-width:2.2;}
 .ro-name{font-family:var(--ar);font-size:30px;font-weight:500;color:var(--ink);direction:rtl;text-align:right;line-height:1.7;margin:2px 4px 0;}
 .ro-roman{font-style:italic;color:var(--muted);text-align:right;margin:0 4px 4px;}
+.p-shots{flex:none;display:flex;gap:8px;margin-top:10px;}
 .p-shot{
-  flex:none;display:flex;align-items:center;justify-content:center;gap:8px;height:40px;margin-top:10px;
+  flex:1;display:flex;align-items:center;justify-content:center;gap:8px;height:40px;
   border:none;border-radius:12px;background:var(--navy);color:#fff;font-size:13px;font-weight:600;cursor:pointer;
   box-shadow:0 8px 16px -10px rgba(24,33,74,.7);transition:background .15s;
 }
