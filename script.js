@@ -773,6 +773,7 @@ function selectNode(id){
   const pid=parentOf[id], par=pid!=null?findNode(pid):null;
   document.getElementById('roName').textContent=n.ur||'—';
   document.getElementById('roRoman').textContent=n.en||'';
+  document.getElementById('downShots').hidden=!kids;   // nobody below to show
   let rows=`<div class="tiles">`+
     `<div><b>${top?'Top':depthOf[id]}</b><span>Generation</span></div>`+
     `<div><b>${kids}</b><span>Children</span></div>`+
@@ -859,10 +860,11 @@ document.getElementById('mPrint').onclick=()=>{ const c=collapsed; collapsed=new
 /* Draw a laid-out tree `L` (of `roots`) to an off-screen canvas at `k` pixels
    per tree unit; `folded` = branches drawn folded. With `hl` = {sel, line} it
    is drawn highlighted the way the screen shows a selected person: gold up the
-   line to the top, teal for the family below. Shared by all the image exporters. */
+   line to the top, teal for the family below. `gen0` = the real generation of
+   `roots` when they are not the top of the family. Shared by all the image exporters. */
 const GOLD='#c8901c', TEAL='#0e8f7e';
 const fontsReady=()=>document.fonts?document.fonts.ready:Promise.resolve();
-function drawTree(L,roots,folded,k,hl){
+function drawTree(L,roots,folded,k,hl,gen0=0){
   const P=L.pos, par=L.parentOf, dep=L.depthOf;
   const cv=document.createElement('canvas'); cv.width=Math.max(1,Math.round(L.w*k)); cv.height=Math.max(1,Math.round(L.h*k));
   const ctx=cv.getContext('2d'); ctx.scale(k,k);
@@ -877,7 +879,7 @@ function drawTree(L,roots,folded,k,hl){
   });
   function rr(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
   // each card is drawn at full size, then scaled to its generation's size
-  function walkN(node){ const p=P[node.id]; if(!p) return; const isTop=par[node.id]===null; const c=branchColor(node.id);
+  function walkN(node){ const p=P[node.id]; if(!p) return; const isTop=par[node.id]===null && !gen0; const c=branchColor(node.id);
     // highlight as [top bar, border, halo colour, halo width], like .selected / .lineage / .kin
     const h=!hl?null:node.id===hl.sel?[TEAL,TEAL,'rgba(14,143,126,.22)',4]:hl.line.has(node.id)?[GOLD,GOLD,'rgba(200,144,28,.25)',3]:[c,TEAL];
     ctx.save(); ctx.translate(p.x,p.y); ctx.scale(p.s,p.s);
@@ -892,7 +894,7 @@ function drawTree(L,roots,folded,k,hl){
     ctx.translate(0,5); rr(0,0,NODE_W,NODE_H,15); ctx.fillStyle=g; ctx.fill(); ctx.restore();
     if(h&&h[2]){ const w=h[3]; rr(-w/2,-w/2,NODE_W+w,NODE_H+w,15+w/2); ctx.lineWidth=w; ctx.strokeStyle=h[2]; ctx.stroke(); }
     rr(0,0,NODE_W,NODE_H,15); ctx.lineWidth=1.5; ctx.strokeStyle=h?h[1]:isTop?'#ddb868':tint(c,.38); ctx.stroke();
-    ctx.fillStyle=c; ctx.font='700 8.5px Inter,sans-serif'; ctx.textAlign='left'; ctx.fillText('GEN '+dep[node.id],12,21);
+    ctx.fillStyle=c; ctx.font='700 8.5px Inter,sans-serif'; ctx.textAlign='left'; ctx.fillText('GEN '+(dep[node.id]+gen0),12,21);
     if(isTop){
       rr(NODE_W-45,11,33,14,6); ctx.fillStyle=GOLD; ctx.fill();
       ctx.fillStyle='#fff'; ctx.font='700 7.5px Inter,sans-serif'; ctx.textAlign='center'; ctx.fillText('TOP',NODE_W-28.5,21);
@@ -966,11 +968,19 @@ document.getElementById('mPdfLandscape').onclick=()=>{ closeMenu(); exportPdf('l
 document.getElementById('mPdfPortrait').onclick=()=>{ closeMenu(); exportPdf('portrait'); };
 
 /* ============================================================
-   SCREENSHOT / PDF OF A HIGHLIGHTED LINE
-   the selected person's highlight on its own: the line from the top down to
-   them (gold), their brothers and their family below as it is unfolded now
-   (teal); everyone else is left out
+   SCREENSHOT / PDF OF ONE PERSON
+   "Line from top": the selected person's highlight on its own: the line from
+   the top down to them (gold), their brothers and their family below as it is
+   unfolded now (teal); everyone else is left out.
+   "From here down": the selected person at the top and everyone below them.
    ============================================================ */
+/* pixels per tree unit: smallest card at least twice its full size, within
+   what one canvas allows */
+function shotScale(L){
+  const minS=Math.min(...Object.values(L.pos).map(p=>p.s));
+  return Math.min(2/minS,8192/Math.max(L.w,L.h),Math.sqrt(16e6/(L.w*L.h)));
+}
+const fileName=n=>(n.en||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||n.id;
 async function lineCanvas(){
   const id=selectedId, n=findNode(id); if(!n) return null;
   // top → selected, from the full tree so it works even when an elder is folded
@@ -987,21 +997,30 @@ async function lineCanvas(){
   const folded=new Set([...collapsed].filter(x=>x===id||!line.has(x)).concat(brothers));
   await fontsReady();
   const L=computeLayout(folded,[root]);
-  // smallest card at least twice its full size, within what one canvas allows
-  const minS=Math.min(...Object.values(L.pos).map(p=>p.s));
-  const k=Math.min(2/minS,8192/Math.max(L.w,L.h),Math.sqrt(16e6/(L.w*L.h)));
-  const name=(n.en||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||id;
-  return {cv:drawTree(L,[root],folded,k,{sel:id,line}),name};
+  return {cv:drawTree(L,[root],folded,shotScale(L),{sel:id,line}),name:fileName(n)};
 }
-document.getElementById('lineShot').onclick=async()=>{
-  const r=await lineCanvas(); if(!r) return;
-  r.cv.toBlob(b=>download(b,`shajra-${r.name}.png`),'image/png');
-};
-document.getElementById('linePdf').onclick=async()=>{
-  const r=await lineCanvas(); if(!r) return;
-  // no border, so the PDF page is the screenshot itself
-  download(canvasToPdf(r.cv,'landscape',0),`shajra-${r.name}.pdf`);
-};
+/* everyone below is drawn, whatever is folded on screen; cards keep their
+   real generation numbers */
+async function downCanvas(){
+  const id=selectedId, n=findNode(id); if(!n) return null;
+  const gen=computeLayout(new Set()).depthOf[id];
+  await fontsReady();
+  const L=computeLayout(new Set(),[n]);
+  return {cv:drawTree(L,[n],new Set(),shotScale(L),null,gen),name:fileName(n)+'-family'};
+}
+function shotButtons(shotId,pdfId,make){
+  document.getElementById(shotId).onclick=async()=>{
+    const r=await make(); if(!r) return;
+    r.cv.toBlob(b=>download(b,`shajra-${r.name}.png`),'image/png');
+  };
+  document.getElementById(pdfId).onclick=async()=>{
+    const r=await make(); if(!r) return;
+    // no border, so the PDF page is the screenshot itself
+    download(canvasToPdf(r.cv,'landscape',0),`shajra-${r.name}.pdf`);
+  };
+}
+shotButtons('lineShot','linePdf',lineCanvas);
+shotButtons('downShot','downPdf',downCanvas);
 
 /* ============================================================
    BOOT
